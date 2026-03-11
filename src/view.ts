@@ -98,6 +98,7 @@ export class BlueprintView extends ItemView {
         onSplitView: (nodeId) => this.openSplitView(nodeId),
         onLinkCreate2: (fromId, toId) => this.handleLinkCreate(fromId, toId),
         onAddCategory: (label, color) => this.handleAddCategory(label, color),
+        onRemoveLink: (fromId, toId) => this.handleRemoveLink(fromId, toId),
         onFontChange: (font, style) => this.handleFontChange(font, style),
         nodeFont: this.plugin.settings.nodeFont ?? 'system-ui',
         nodeFontStyle: this.plugin.settings.nodeFontStyle ?? 'bold',
@@ -419,6 +420,53 @@ export class BlueprintView extends ItemView {
 
     // Rescan to show the new wire
     this.scheduleRescan();
+  }
+
+  // ─── Link Removal (Unlink) ─────────────────────────────────
+
+  private async handleRemoveLink(fromNodeId: string, toNodeId: string): Promise<void> {
+    const fromNode = this.findNodeById(fromNodeId);
+    const toNode = this.findNodeById(toNodeId);
+
+    if (!fromNode?.path || !toNode?.path) {
+      new Notice("Cannot remove link — file path not found");
+      return;
+    }
+
+    // Try removing the link from the source file first, then the target file
+    const removed = await this.tryRemoveLinkFromFile(fromNode.path, toNode.path, toNode.title);
+    if (!removed) {
+      // Try the reverse direction
+      const removedReverse = await this.tryRemoveLinkFromFile(toNode.path, fromNode.path, fromNode.title);
+      if (!removedReverse) {
+        new Notice("No wikilink found between these notes");
+        return;
+      }
+    }
+
+    this.scheduleRescan();
+  }
+
+  private async tryRemoveLinkFromFile(filePath: string, targetPath: string, targetTitle: string): Promise<boolean> {
+    const file = this.app.vault.getAbstractFileByPath(filePath);
+    if (!(file instanceof TFile)) return false;
+
+    const content = await this.app.vault.read(file);
+    const targetBasename = targetPath.replace(/\.md$/, '').split('/').pop() ?? '';
+
+    // Match lines containing [[targetBasename]] (with optional alias)
+    const linkPattern = new RegExp(
+      `^\\s*-\\s*\\[\\[${targetBasename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\|[^\\]]*)?\\]\\]\\s*$`,
+      'gm'
+    );
+
+    if (!linkPattern.test(content)) return false;
+
+    // Remove the line(s) containing the link
+    const newContent = content.replace(linkPattern, '').replace(/\n{3,}/g, '\n\n');
+    await this.app.vault.modify(file, newContent);
+    new Notice(`Removed link to [[${targetBasename}]]`);
+    return true;
   }
 
   // ─── Context Menu Actions ──────────────────────────────────

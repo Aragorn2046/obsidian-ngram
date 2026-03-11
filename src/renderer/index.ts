@@ -78,6 +78,7 @@ export interface BlueprintRendererOptions {
   onLinkCreate2?: (fromId: string, toId: string) => void;
   onSplitView?: (nodeId: string) => void;
   onAddCategory?: (label: string, color: string) => void;
+  onRemoveLink?: (fromId: string, toId: string) => void;
   onFontChange?: (font: string, style: FontStyle) => void;
   nodeFont?: string;
   nodeFontStyle?: FontStyle;
@@ -155,6 +156,7 @@ export class BlueprintRenderer {
   private importanceScores: Map<string, number> | null = null;
   private gapPanel: GapPanel;
   private onSplitViewCb?: (nodeId: string) => void;
+  private onRemoveLinkCb?: (fromId: string, toId: string) => void;
   private onFontChangeCb?: (font: string, style: FontStyle) => void;
   private nodeFont: string;
   private nodeFontStyle: FontStyle;
@@ -182,6 +184,7 @@ export class BlueprintRenderer {
     this.onForceSettingsChangeCb = options.onForceSettingsChange;
     this.onColorChangeCb = options.onColorChange;
     this.onSplitViewCb = options.onSplitView;
+    this.onRemoveLinkCb = options.onRemoveLink;
     this.onFontChangeCb = options.onFontChange;
     this.nodeFont = options.nodeFont ?? 'system-ui';
     this.nodeFontStyle = options.nodeFontStyle ?? 'bold';
@@ -319,6 +322,9 @@ export class BlueprintRenderer {
         onCreateLink: (fromId, toId) => {
           if (options.onLinkCreate2) options.onLinkCreate2(fromId, toId);
           else if (this.onLinkCreateCb) this.onLinkCreateCb(fromId, toId);
+        },
+        onRemoveLink: (fromId, toId) => {
+          this.onRemoveLinkCb?.(fromId, toId);
         },
       },
       this.theme,
@@ -1146,7 +1152,7 @@ export class BlueprintRenderer {
     this.minimap.setData(this.data, this.viewMode, this.organicRadii);
     this.filterPanel.setNodes(this.data.nodes);
     this.previewTooltip.clearCache();
-    this.gapPanel.hide();
+    // Don't hide the gap panel on rescan — keep it persistent
 
     // Recompute clusters if active
     if (this.clustersActive) this.computeClusters();

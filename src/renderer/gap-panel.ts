@@ -11,6 +11,7 @@ import type { GapSuggestion } from './graph-analysis';
 export interface GapPanelCallbacks {
   onNodeClick: (nodeId: string) => void;
   onCreateLink: (fromId: string, toId: string) => void;
+  onRemoveLink: (fromId: string, toId: string) => void;
 }
 
 // ─── GapPanel ───────────────────────────────────────────────
@@ -21,6 +22,9 @@ export class GapPanel {
   private callbacks: GapPanelCallbacks;
   private theme: ThemeColors;
   private visible = false;
+  private subtitleEl: HTMLDivElement | null = null;
+  private listEl: HTMLDivElement | null = null;
+  private cardCount = 0;
 
   // Drag state
   private dragging = false;
@@ -223,19 +227,17 @@ export class GapPanel {
     this.el.appendChild(header);
 
     // ─── Subtitle ─────────────────────────────────────
-    const subtitle = document.createElement('div');
-    Object.assign(subtitle.style, {
+    this.subtitleEl = document.createElement('div');
+    Object.assign(this.subtitleEl.style, {
       padding: '5px 12px 8px',
       fontSize: '11px',
       color: this.theme.panelTextMuted,
       borderBottom: `1px solid ${this.theme.panelBorder}`,
       flexShrink: '0',
     });
-    subtitle.textContent =
-      gaps.length === 0
-        ? 'No potential connections found'
-        : `${gaps.length} potential connection${gaps.length !== 1 ? 's' : ''} found`;
-    this.el.appendChild(subtitle);
+    this.cardCount = gaps.length;
+    this.updateSubtitle();
+    this.el.appendChild(this.subtitleEl);
 
     // ─── Scrollable content area ─────────────────────
     const scrollArea = document.createElement('div');
@@ -258,8 +260,8 @@ export class GapPanel {
       empty.textContent = 'Run the analysis on a graph with tagged notes.';
       scrollArea.appendChild(empty);
     } else {
-      const list = document.createElement('div');
-      Object.assign(list.style, {
+      this.listEl = document.createElement('div');
+      Object.assign(this.listEl.style, {
         padding: '6px 8px 8px',
         display: 'flex',
         flexDirection: 'column',
@@ -267,10 +269,10 @@ export class GapPanel {
       });
 
       for (const gap of gaps) {
-        list.appendChild(this.buildGapCard(gap, nodeMap));
+        this.listEl.appendChild(this.buildGapCard(gap, nodeMap));
       }
 
-      scrollArea.appendChild(list);
+      scrollArea.appendChild(this.listEl);
     }
 
     this.el.appendChild(scrollArea);
@@ -424,44 +426,113 @@ export class GapPanel {
       card.appendChild(reasonEl);
     }
 
-    // ─── Link button row ──────────────────────────────
+    // ─── Action button row ─────────────────────────────
     const actionRow = document.createElement('div');
     Object.assign(actionRow.style, {
       display: 'flex',
       justifyContent: 'flex-end',
+      gap: '6px',
       marginTop: '2px',
     });
 
-    const linkBtn = document.createElement('button');
-    Object.assign(linkBtn.style, {
-      background: this.theme.buttonBg,
-      border: `1px solid ${this.theme.buttonBorder}`,
-      borderRadius: '4px',
-      padding: '3px 10px',
-      cursor: 'pointer',
-      color: this.theme.buttonText,
-      fontSize: '11px',
-      fontFamily: 'inherit',
-      lineHeight: '1.4',
-      transition: 'background 0.1s',
+    const makeActionBtn = (text: string, danger = false): HTMLButtonElement => {
+      const btn = document.createElement('button');
+      Object.assign(btn.style, {
+        background: this.theme.buttonBg,
+        border: `1px solid ${this.theme.buttonBorder}`,
+        borderRadius: '4px',
+        padding: '3px 10px',
+        cursor: 'pointer',
+        color: danger ? (this.theme.textError ?? '#e55') : this.theme.buttonText,
+        fontSize: '11px',
+        fontFamily: 'inherit',
+        lineHeight: '1.4',
+        transition: 'background 0.1s, opacity 0.15s',
+      });
+      btn.textContent = text;
+      btn.addEventListener('mouseenter', () => {
+        btn.style.background = this.theme.buttonHoverBg;
+        btn.style.color = danger ? (this.theme.textError ?? '#e55') : this.theme.panelText;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.background = this.theme.buttonBg;
+        btn.style.color = danger ? (this.theme.textError ?? '#e55') : this.theme.buttonText;
+      });
+      return btn;
+    };
+
+    // Link button — creates link, transforms card to "linked" state
+    const linkBtn = makeActionBtn('Link');
+
+    // Unlink button — undoes the link, then removes the card
+    const unlinkBtn = makeActionBtn('Unlink', true);
+    unlinkBtn.style.display = 'none';
+
+    // Status label
+    const statusEl = document.createElement('span');
+    Object.assign(statusEl.style, {
+      fontSize: '10px',
+      color: '#4ade80',
+      fontWeight: '500',
+      display: 'none',
+      alignSelf: 'center',
     });
-    linkBtn.textContent = 'Link';
-    linkBtn.addEventListener('mouseenter', () => {
-      linkBtn.style.background = this.theme.buttonHoverBg;
-      linkBtn.style.color = this.theme.panelText;
-    });
-    linkBtn.addEventListener('mouseleave', () => {
-      linkBtn.style.background = this.theme.buttonBg;
-      linkBtn.style.color = this.theme.buttonText;
-    });
+    statusEl.textContent = 'Linked \u2713';
+
     linkBtn.addEventListener('click', () => {
       this.callbacks.onCreateLink(gap.nodeA, gap.nodeB);
+      // Transform to "linked" state
+      linkBtn.style.display = 'none';
+      unlinkBtn.style.display = '';
+      statusEl.style.display = '';
+      card.style.opacity = '0.6';
     });
 
+    unlinkBtn.addEventListener('click', () => {
+      this.callbacks.onRemoveLink(gap.nodeA, gap.nodeB);
+      this.removeCard(card, gap);
+    });
+
+    actionRow.appendChild(statusEl);
     actionRow.appendChild(linkBtn);
+    actionRow.appendChild(unlinkBtn);
+
     card.appendChild(actionRow);
 
     return card;
+  }
+
+  // ─── Card Management ─────────────────────────────────
+
+  /** Remove a card with a fade-out animation and update the counter */
+  private removeCard(card: HTMLDivElement, _gap: GapSuggestion): void {
+    card.style.transition = 'opacity 0.25s, max-height 0.3s, margin 0.3s, padding 0.3s';
+    card.style.opacity = '0';
+    card.style.overflow = 'hidden';
+    card.style.maxHeight = card.offsetHeight + 'px';
+
+    setTimeout(() => {
+      card.style.maxHeight = '0';
+      card.style.margin = '0';
+      card.style.padding = '0';
+      card.style.border = 'none';
+    }, 150);
+
+    setTimeout(() => {
+      card.remove();
+      this.cardCount--;
+      this.updateSubtitle();
+    }, 400);
+  }
+
+  private updateSubtitle(): void {
+    if (!this.subtitleEl) return;
+    if (this.cardCount <= 0) {
+      this.subtitleEl.textContent = 'All gaps resolved';
+    } else {
+      this.subtitleEl.textContent =
+        `${this.cardCount} potential connection${this.cardCount !== 1 ? 's' : ''} remaining`;
+    }
   }
 
   // ─── Public API ───────────────────────────────────────
