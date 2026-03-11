@@ -1,5 +1,6 @@
 // ─── Gap Panel — Gap analysis results overlay ─────────────────
 // Zero Obsidian dependencies. DOM-only UI.
+// Draggable (via header) and resizable (via corner handle).
 
 import type { NodeDef } from '../types';
 import type { ThemeColors } from './theme';
@@ -20,7 +21,24 @@ export class GapPanel {
   private callbacks: GapPanelCallbacks;
   private theme: ThemeColors;
   private visible = false;
-  private rightOffset = 12;
+
+  // Drag state
+  private dragging = false;
+  private dragStartX = 0;
+  private dragStartY = 0;
+  private elStartX = 0;
+  private elStartY = 0;
+
+  // Resize state
+  private resizing = false;
+  private resizeStartX = 0;
+  private resizeStartY = 0;
+  private resizeStartW = 0;
+  private resizeStartH = 0;
+
+  // Bound handlers for cleanup
+  private onMouseMove: (e: MouseEvent) => void;
+  private onMouseUp: (e: MouseEvent) => void;
 
   constructor(
     container: HTMLDivElement,
@@ -36,7 +54,16 @@ export class GapPanel {
     this.applyPanelStyles();
     this.el.style.display = 'none';
 
+    // Prevent wheel events from propagating (scrolling the panel shouldn't scroll the view)
+    this.el.addEventListener('wheel', (e) => {
+      e.stopPropagation();
+    });
+
     this.container.appendChild(this.el);
+
+    // Bind mouse handlers
+    this.onMouseMove = (e: MouseEvent) => this.handleMouseMove(e);
+    this.onMouseUp = () => this.handleMouseUp();
   }
 
   // ─── Styles ───────────────────────────────────────────
@@ -44,21 +71,88 @@ export class GapPanel {
   private applyPanelStyles(): void {
     Object.assign(this.el.style, {
       position: 'absolute',
-      right: this.rightOffset + 'px',
+      right: '12px',
       top: '50px',
       zIndex: '15',
       background: this.theme.panelBg,
       border: `1px solid ${this.theme.panelBorder}`,
       borderRadius: '6px',
       padding: '0',
-      maxWidth: '360px',
-      maxHeight: '500px',
-      overflowY: 'auto',
+      width: '340px',
+      height: '420px',
+      minWidth: '240px',
+      minHeight: '200px',
+      overflow: 'hidden',
       color: this.theme.panelText,
       fontSize: '12px',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
       boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
     });
+  }
+
+  // ─── Drag & Resize ─────────────────────────────────────
+
+  private convertToLeftTop(): void {
+    // On first interaction, switch from right-based to left-based positioning
+    if (this.el.style.right && this.el.style.right !== 'auto') {
+      const rect = this.el.getBoundingClientRect();
+      const containerRect = this.container.getBoundingClientRect();
+      this.el.style.left = (rect.left - containerRect.left) + 'px';
+      this.el.style.top = (rect.top - containerRect.top) + 'px';
+      this.el.style.right = 'auto';
+    }
+  }
+
+  private startDrag(e: MouseEvent): void {
+    this.convertToLeftTop();
+    this.dragging = true;
+    this.resizing = false;
+    this.dragStartX = e.clientX;
+    this.dragStartY = e.clientY;
+    this.elStartX = parseInt(this.el.style.left) || 0;
+    this.elStartY = parseInt(this.el.style.top) || 0;
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
+    e.preventDefault();
+  }
+
+  private startResize(e: MouseEvent): void {
+    this.convertToLeftTop();
+    this.resizing = true;
+    this.dragging = false;
+    this.resizeStartX = e.clientX;
+    this.resizeStartY = e.clientY;
+    this.resizeStartW = this.el.offsetWidth;
+    this.resizeStartH = this.el.offsetHeight;
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
+  private handleMouseMove(e: MouseEvent): void {
+    if (this.dragging) {
+      const dx = e.clientX - this.dragStartX;
+      const dy = e.clientY - this.dragStartY;
+      this.el.style.left = (this.elStartX + dx) + 'px';
+      this.el.style.top = (this.elStartY + dy) + 'px';
+    } else if (this.resizing) {
+      const dx = e.clientX - this.resizeStartX;
+      const dy = e.clientY - this.resizeStartY;
+      const newW = Math.max(240, this.resizeStartW + dx);
+      const newH = Math.max(200, this.resizeStartH + dy);
+      this.el.style.width = newW + 'px';
+      this.el.style.height = newH + 'px';
+    }
+  }
+
+  private handleMouseUp(): void {
+    this.dragging = false;
+    this.resizing = false;
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseup', this.onMouseUp);
   }
 
   // ─── Render ───────────────────────────────────────────
@@ -69,7 +163,7 @@ export class GapPanel {
       this.el.removeChild(this.el.firstChild);
     }
 
-    // ─── Header ──────────────────────────────────────
+    // ─── Header (drag handle) ──────────────────────────
     const header = document.createElement('div');
     Object.assign(header.style, {
       display: 'flex',
@@ -77,10 +171,20 @@ export class GapPanel {
       justifyContent: 'space-between',
       padding: '10px 12px 8px',
       borderBottom: `1px solid ${this.theme.panelBorder}`,
-      position: 'sticky',
-      top: '0',
       background: this.theme.panelBg,
-      zIndex: '1',
+      cursor: 'grab',
+      userSelect: 'none',
+      flexShrink: '0',
+    });
+
+    header.addEventListener('mousedown', (e) => {
+      // Don't start drag if clicking close button
+      if ((e.target as HTMLElement).tagName === 'BUTTON') return;
+      header.style.cursor = 'grabbing';
+      this.startDrag(e);
+    });
+    header.addEventListener('mouseup', () => {
+      header.style.cursor = 'grab';
     });
 
     const titleEl = document.createElement('span');
@@ -106,7 +210,7 @@ export class GapPanel {
       alignItems: 'center',
       justifyContent: 'center',
     });
-    closeBtn.textContent = '×';
+    closeBtn.textContent = '\u00d7';
     closeBtn.addEventListener('mouseenter', () => {
       closeBtn.style.color = this.theme.panelText;
     });
@@ -125,12 +229,21 @@ export class GapPanel {
       fontSize: '11px',
       color: this.theme.panelTextMuted,
       borderBottom: `1px solid ${this.theme.panelBorder}`,
+      flexShrink: '0',
     });
     subtitle.textContent =
       gaps.length === 0
         ? 'No potential connections found'
         : `${gaps.length} potential connection${gaps.length !== 1 ? 's' : ''} found`;
     this.el.appendChild(subtitle);
+
+    // ─── Scrollable content area ─────────────────────
+    const scrollArea = document.createElement('div');
+    Object.assign(scrollArea.style, {
+      flex: '1',
+      overflowY: 'auto',
+      minHeight: '0',
+    });
 
     // ─── Gap Cards ────────────────────────────────────
     if (gaps.length === 0) {
@@ -143,23 +256,57 @@ export class GapPanel {
         fontStyle: 'italic',
       });
       empty.textContent = 'Run the analysis on a graph with tagged notes.';
-      this.el.appendChild(empty);
-      return;
+      scrollArea.appendChild(empty);
+    } else {
+      const list = document.createElement('div');
+      Object.assign(list.style, {
+        padding: '6px 8px 8px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+      });
+
+      for (const gap of gaps) {
+        list.appendChild(this.buildGapCard(gap, nodeMap));
+      }
+
+      scrollArea.appendChild(list);
     }
 
-    const list = document.createElement('div');
-    Object.assign(list.style, {
-      padding: '6px 8px 8px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '6px',
+    this.el.appendChild(scrollArea);
+
+    // ─── Resize handle (bottom-right corner) ─────────
+    const resizeHandle = document.createElement('div');
+    Object.assign(resizeHandle.style, {
+      position: 'absolute',
+      right: '0',
+      bottom: '0',
+      width: '16px',
+      height: '16px',
+      cursor: 'nwse-resize',
+      zIndex: '2',
     });
-
-    for (const gap of gaps) {
-      list.appendChild(this.buildGapCard(gap, nodeMap));
+    // Draw the resize grip (three diagonal lines)
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '16');
+    svg.setAttribute('height', '16');
+    svg.setAttribute('viewBox', '0 0 16 16');
+    svg.style.opacity = '0.4';
+    for (const offset of [4, 8, 12]) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', String(offset));
+      line.setAttribute('y1', '16');
+      line.setAttribute('x2', '16');
+      line.setAttribute('y2', String(offset));
+      line.setAttribute('stroke', this.theme.panelText);
+      line.setAttribute('stroke-width', '1');
+      svg.appendChild(line);
     }
+    resizeHandle.appendChild(svg);
 
-    this.el.appendChild(list);
+    resizeHandle.addEventListener('mousedown', (e) => this.startResize(e));
+
+    this.el.appendChild(resizeHandle);
   }
 
   // ─── Gap Card ─────────────────────────────────────────
@@ -229,7 +376,7 @@ export class GapPanel {
       fontSize: '11px',
       flexShrink: '0',
     });
-    arrowEl.textContent = '↔';
+    arrowEl.textContent = '\u2194';
     nodesRow.appendChild(arrowEl);
 
     nodesRow.appendChild(makeNodeLabel(gap.nodeB, nodeB));
@@ -323,7 +470,7 @@ export class GapPanel {
   show(gaps: GapSuggestion[], nodeMap: Record<string, NodeDef>): void {
     this.render(gaps, nodeMap);
     this.visible = true;
-    this.el.style.display = 'block';
+    this.el.style.display = 'flex';
   }
 
   /** Hide the panel. */
@@ -335,7 +482,7 @@ export class GapPanel {
   /** Toggle visibility. */
   toggle(): void {
     if (this.visible) this.hide();
-    else this.el.style.display = 'block'; // show without re-rendering; caller should use show() with data
+    else this.el.style.display = 'flex'; // show without re-rendering; caller should use show() with data
   }
 
   /** Whether the panel is currently visible. */
@@ -349,14 +496,17 @@ export class GapPanel {
     this.applyPanelStyles();
   }
 
-  /** Shift the right position (e.g. when controls panel opens). */
+  /** Shift the right position (e.g. when controls panel opens). Only applies before first drag. */
   setRightOffset(px: number): void {
-    this.rightOffset = px;
-    this.el.style.right = px + 'px';
+    // Only update right if we haven't switched to left-based positioning yet
+    if (this.el.style.right && this.el.style.right !== 'auto') {
+      this.el.style.right = px + 'px';
+    }
   }
 
-  /** Remove the DOM element. */
+  /** Remove the DOM element and clean up listeners. */
   destroy(): void {
+    this.handleMouseUp(); // clean up any active drag/resize
     if (this.el.parentNode) {
       this.el.parentNode.removeChild(this.el);
     }
