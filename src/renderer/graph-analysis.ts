@@ -320,15 +320,25 @@ export function findGaps(
         if (shared.length < 1) continue;
 
         const inDiffCluster = clusters.get(a) !== clusters.get(b);
-        const reason = shared.length >= 2
-          ? `Share ${shared.length} tags (${shared.join(', ')}) with no direct link`
-          : `Share tag "${shared[0]}" with no direct link`;
+
+        // Build an informative reason string
+        let reason: string;
+        if (shared.length >= 3) {
+          reason = `These notes share ${shared.length} tags but aren't linked. Strong topical overlap suggests a missing connection.`;
+        } else if (shared.length === 2) {
+          reason = `Both tagged ${shared.map(t => '#' + t).join(' and ')} — likely related but no wikilink exists between them.`;
+        } else {
+          reason = `Both tagged #${shared[0]} — consider linking if they discuss the same topic.`;
+        }
+        if (inDiffCluster) {
+          reason += ' These notes are in different graph clusters, so linking them would bridge two separate communities.';
+        }
 
         gaps.push({
           nodeA: a,
           nodeB: b,
           sharedTags: shared,
-          reason: reason + (inDiffCluster ? ' (different clusters)' : ''),
+          reason,
         });
       }
     }
