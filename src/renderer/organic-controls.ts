@@ -2,12 +2,13 @@
 // DOM-based overlay panel matching Obsidian's Graph View style.
 // Zero Obsidian dependencies.
 
-import type { OrganicForceSettings } from '../types';
+import type { OrganicForceSettings, FontStyle } from '../types';
 import type { ThemeColors } from './theme';
 
 export interface OrganicControlsCallbacks {
   onForceChange: (forces: OrganicForceSettings) => void;
   onAnimate: () => void;
+  onFontChange?: (family: string, style: FontStyle) => void;
 }
 
 export class OrganicControlsPanel {
@@ -16,16 +17,22 @@ export class OrganicControlsPanel {
   private callbacks: OrganicControlsCallbacks;
   private forces: OrganicForceSettings;
   private visible = false;
+  private fontFamily: string;
+  private fontStyle: FontStyle;
 
   constructor(
     container: HTMLDivElement,
     callbacks: OrganicControlsCallbacks,
     forces: OrganicForceSettings,
     theme: ThemeColors,
+    fontFamily = 'system-ui',
+    fontStyle: FontStyle = 'bold',
   ) {
     this.container = container;
     this.callbacks = callbacks;
     this.forces = { ...forces };
+    this.fontFamily = fontFamily;
+    this.fontStyle = fontStyle;
 
     this.el = document.createElement('div');
     this.el.className = 'blueprint-organic-controls';
@@ -95,6 +102,36 @@ export class OrganicControlsPanel {
     this.addSlider('Link thickness', this.forces.linkThickness, 0.1, 1, 0.01, (val) => {
       this.forces.linkThickness = val;
       this.emit();
+    });
+
+    // ─── Typography section ──────────────────────────
+    this.addSectionHeader('Typography');
+
+    this.addDropdown('Font', this.fontFamily, [
+      { value: 'system-ui', label: 'System UI' },
+      { value: 'Inter, sans-serif', label: 'Inter' },
+      { value: 'Helvetica, Arial, sans-serif', label: 'Helvetica' },
+      { value: 'Arial, sans-serif', label: 'Arial' },
+      { value: 'Georgia, serif', label: 'Georgia' },
+      { value: "'Courier New', monospace", label: 'Courier New' },
+      { value: 'monospace', label: 'Monospace' },
+      { value: "'Segoe UI', sans-serif", label: 'Segoe UI' },
+      { value: "'SF Pro', system-ui, sans-serif", label: 'SF Pro' },
+      { value: 'Verdana, sans-serif', label: 'Verdana' },
+      { value: "'Trebuchet MS', sans-serif", label: 'Trebuchet MS' },
+      { value: "'Palatino Linotype', serif", label: 'Palatino' },
+    ], (val) => {
+      this.fontFamily = val;
+      this.callbacks.onFontChange?.(this.fontFamily, this.fontStyle);
+    });
+
+    this.addDropdown('Style', this.fontStyle, [
+      { value: 'bold', label: 'Bold' },
+      { value: 'normal', label: 'Normal' },
+      { value: 'italic', label: 'Italic' },
+    ], (val) => {
+      this.fontStyle = val as FontStyle;
+      this.callbacks.onFontChange?.(this.fontFamily, this.fontStyle);
     });
 
     // Redistribute button
@@ -193,6 +230,37 @@ export class OrganicControlsPanel {
     knob.className = 'blueprint-organic-toggle-knob';
     toggle.appendChild(knob);
     row.appendChild(toggle);
+
+    this.el.appendChild(row);
+  }
+
+  private addDropdown(
+    label: string,
+    value: string,
+    options: { value: string; label: string }[],
+    onChange: (val: string) => void,
+  ): void {
+    const row = document.createElement('div');
+    row.className = 'blueprint-organic-row';
+
+    const labelEl = document.createElement('div');
+    labelEl.className = 'blueprint-organic-label';
+    labelEl.textContent = label;
+    row.appendChild(labelEl);
+
+    const select = document.createElement('select');
+    select.className = 'blueprint-organic-dropdown';
+    for (const opt of options) {
+      const optEl = document.createElement('option');
+      optEl.value = opt.value;
+      optEl.textContent = opt.label;
+      if (opt.value === value) optEl.selected = true;
+      select.appendChild(optEl);
+    }
+    select.addEventListener('change', () => {
+      onChange(select.value);
+    });
+    row.appendChild(select);
 
     this.el.appendChild(row);
   }

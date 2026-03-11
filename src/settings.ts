@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import type NgramPlugin from "./main";
+import type { FontStyle } from "./types";
 
 export class NgramSettingTab extends PluginSettingTab {
   plugin: NgramPlugin;
@@ -44,6 +45,47 @@ export class NgramSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.organicSizing)
           .onChange(async (value) => {
             this.plugin.settings.organicSizing = value;
+            await this.plugin.saveSettings();
+            this.plugin.settingsChanged();
+          })
+      );
+
+    containerEl.createEl("h3", { text: "Typography" });
+
+    new Setting(containerEl)
+      .setName("Node font")
+      .setDesc("Font family used for node labels on the canvas.")
+      .addDropdown((drop) =>
+        drop
+          .addOption("system-ui", "System UI")
+          .addOption("Inter, sans-serif", "Inter")
+          .addOption("Helvetica, Arial, sans-serif", "Helvetica")
+          .addOption("Arial, sans-serif", "Arial")
+          .addOption("Georgia, serif", "Georgia")
+          .addOption("'Courier New', monospace", "Courier New")
+          .addOption("monospace", "Monospace")
+          .addOption("'Segoe UI', sans-serif", "Segoe UI")
+          .addOption("Verdana, sans-serif", "Verdana")
+          .addOption("'Palatino Linotype', serif", "Palatino")
+          .setValue(this.plugin.settings.nodeFont ?? "system-ui")
+          .onChange(async (value) => {
+            this.plugin.settings.nodeFont = value;
+            await this.plugin.saveSettings();
+            this.plugin.settingsChanged();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName("Font style")
+      .setDesc("Weight/style applied to node title text.")
+      .addDropdown((drop) =>
+        drop
+          .addOption("bold", "Bold")
+          .addOption("normal", "Normal")
+          .addOption("italic", "Italic")
+          .setValue(this.plugin.settings.nodeFontStyle ?? "bold")
+          .onChange(async (value) => {
+            this.plugin.settings.nodeFontStyle = value as FontStyle;
             await this.plugin.saveSettings();
             this.plugin.settingsChanged();
           })

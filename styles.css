@@ -166,6 +166,26 @@
   margin-bottom: 3px;
 }
 
+.blueprint-organic-dropdown {
+  width: 100%;
+  background: var(--interactive-normal);
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.blueprint-organic-dropdown:hover {
+  background: var(--interactive-hover);
+}
+
+.blueprint-organic-dropdown:focus {
+  outline: 1px solid var(--interactive-accent);
+}
+
 .blueprint-organic-slider {
   -webkit-appearance: none;
   appearance: none;

@@ -1,8 +1,31 @@
 // ─── Canvas Core — Stateless drawing functions ──────────────
 // Zero Obsidian dependencies. Pure Canvas2D rendering.
 
-import type { NodeDef, WireDef, GroupDef, CategoryDef, PinDef, OrganicForceSettings } from '../types';
+import type { NodeDef, WireDef, GroupDef, CategoryDef, PinDef, OrganicForceSettings, FontStyle } from '../types';
 import type { ThemeColors } from './theme';
+
+// ─── Font Configuration (module-level to avoid parameter threading) ──
+
+let _fontFamily = 'system-ui';
+let _fontStyle: FontStyle = 'bold';
+
+/** Set the font used for all canvas text rendering */
+export function setCanvasFont(family: string, style: FontStyle): void {
+  _fontFamily = family;
+  _fontStyle = style;
+}
+
+/** Build a CSS font string using the configured family and style */
+export function buildFont(size: number, weightOverride?: string): string {
+  const weight = weightOverride ?? (_fontStyle === 'bold' ? 'bold' : _fontStyle === 'italic' ? 'italic' : 'normal');
+  return `${weight} ${size}px ${_fontFamily}`;
+}
+
+/** Build a font string with explicit numeric weight (for group labels etc.) */
+export function buildFontWeight(size: number, numericWeight: number): string {
+  const style = _fontStyle === 'italic' ? 'italic ' : '';
+  return `${style}${numericWeight} ${size}px ${_fontFamily}`;
+}
 
 // ─── Constants ──────────────────────────────────────────────
 
@@ -379,7 +402,7 @@ export function drawGroup(
   // Label — larger and more prominent at low zoom
   const baseFontSize = isLowZoom ? 16 : 12;
   const fs = Math.max(9, Math.min(18, baseFontSize * vt.zoom));
-  ctx.font = `600 ${fs}px system-ui`;
+  ctx.font = buildFontWeight(fs, 600);
   ctx.fillStyle = isLowZoom ? c + '90' : c + '50';
   ctx.textAlign = 'left';
 
@@ -422,7 +445,7 @@ export function drawCollapsedGroup(
 
   // Label
   const fs = Math.max(10, Math.min(16, 13 * vt.zoom));
-  ctx.font = `600 ${fs}px system-ui`;
+  ctx.font = buildFontWeight(fs, 600);
   ctx.fillStyle = c;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -430,7 +453,7 @@ export function drawCollapsedGroup(
 
   // Node count badge
   const badgeFs = Math.max(8, Math.min(12, 10 * vt.zoom));
-  ctx.font = `${badgeFs}px system-ui`;
+  ctx.font = buildFont(badgeFs, 'normal');
   ctx.fillStyle = theme.textMuted ?? (c + '99');
   ctx.fillText(`${nodeCount} nodes`, cx, cy + fs * 0.55);
 
@@ -573,7 +596,7 @@ export function drawNode(
     // Title only if readable
     if (vt.zoom > 0.12) {
       const titleFs = Math.max(6, 11 * vt.zoom);
-      ctx.font = `bold ${titleFs}px system-ui`;
+      ctx.font = buildFont(titleFs);
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
       ctx.fillText(node.title, x + w / 2, y + compactH / 2 + titleFs * 0.35, w - 4);
@@ -632,7 +655,7 @@ export function drawNode(
   const badgeFs = Math.max(7, Math.min(11, 8 * vt.zoom));
 
   // 6. Title text (white on colored header, wrapped)
-  ctx.font = `bold ${titleFs}px system-ui`;
+  ctx.font = buildFont(titleFs);
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'center';
   const titleLines: string[] = (node as any).titleLines ?? [node.title];
@@ -649,7 +672,7 @@ export function drawNode(
     const connCount = countConnections(node.id, wires);
     if (connCount > 0) {
       const badgeText = String(connCount);
-      ctx.font = `bold ${badgeFs}px system-ui`;
+      ctx.font = buildFont(badgeFs);
       const bw = ctx.measureText(badgeText).width + 6;
       const bx = x + w - bw - 4 * vt.zoom;
       const by = y + 3 * vt.zoom;
@@ -681,7 +704,7 @@ export function drawNode(
       ctx.lineWidth = 1;
       ctx.stroke();
       if (showPinLabels) {
-        ctx.font = `${pinFs}px system-ui`;
+        ctx.font = buildFont(pinFs, 'normal');
         ctx.fillStyle = theme.pinLabel;
         ctx.textAlign = 'left';
         ctx.fillText(pin.label, px + 10 * vt.zoom, py + 3 * vt.zoom);
@@ -700,7 +723,7 @@ export function drawNode(
       ctx.lineWidth = 1;
       ctx.stroke();
       if (showPinLabels) {
-        ctx.font = `${pinFs}px system-ui`;
+        ctx.font = buildFont(pinFs, 'normal');
         ctx.fillStyle = theme.pinLabel;
         ctx.textAlign = 'right';
         ctx.fillText(pin.label, px - 10 * vt.zoom, py + 3 * vt.zoom);
@@ -802,7 +825,7 @@ export function drawOrganicNode(
   if (textAlpha > 0.05) {
     const maxTextW = r * 1.4;
     const titleFs = Math.max(7, Math.min(14, Math.min(11 * vt.zoom, r * vt.zoom * 0.35)));
-    ctx.font = `bold ${titleFs}px system-ui`;
+    ctx.font = buildFont(titleFs);
     ctx.fillStyle = '#ffffff';
     ctx.globalAlpha = (state.isActive ? 1.0 : 0.15) * textAlpha;
     ctx.textAlign = 'center';

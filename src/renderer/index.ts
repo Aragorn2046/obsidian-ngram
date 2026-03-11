@@ -27,11 +27,13 @@ import {
   HEADER_H,
   wrapText,
   headerHeight,
+  setCanvasFont,
+  buildFont,
 } from './canvas';
 import { InteractionManager } from './interaction';
 import { applyLayout } from './layout';
 import { ForceSimulation, organicRadius } from './layouts/force-directed';
-import type { ViewMode, OrganicForceSettings } from '../types';
+import type { ViewMode, OrganicForceSettings, FontStyle } from '../types';
 import { OrganicControlsPanel } from './organic-controls';
 import { Legend } from './legend';
 import { SearchPanel, type SearchResult } from './search';
@@ -76,6 +78,9 @@ export interface BlueprintRendererOptions {
   onLinkCreate2?: (fromId: string, toId: string) => void;
   onSplitView?: (nodeId: string) => void;
   onAddCategory?: (label: string, color: string) => void;
+  onFontChange?: (font: string, style: FontStyle) => void;
+  nodeFont?: string;
+  nodeFontStyle?: FontStyle;
 }
 
 // ─── BlueprintRenderer ──────────────────────────────────────
@@ -150,6 +155,9 @@ export class BlueprintRenderer {
   private importanceScores: Map<string, number> | null = null;
   private gapPanel: GapPanel;
   private onSplitViewCb?: (nodeId: string) => void;
+  private onFontChangeCb?: (font: string, style: FontStyle) => void;
+  private nodeFont: string;
+  private nodeFontStyle: FontStyle;
 
   // Render loop
   private animFrameId: number | null = null;
@@ -174,6 +182,10 @@ export class BlueprintRenderer {
     this.onForceSettingsChangeCb = options.onForceSettingsChange;
     this.onColorChangeCb = options.onColorChange;
     this.onSplitViewCb = options.onSplitView;
+    this.onFontChangeCb = options.onFontChange;
+    this.nodeFont = options.nodeFont ?? 'system-ui';
+    this.nodeFontStyle = options.nodeFontStyle ?? 'bold';
+    setCanvasFont(this.nodeFont, this.nodeFontStyle);
     this.organicForces = options.organicForces ?? {
       centerForce: 0.3, repelForce: 0.5, linkForce: 0.4, linkDistance: 0.5,
       nodeSize: 0.4, linkThickness: 0.3, arrows: true, textFadeThreshold: 0.3,
@@ -258,9 +270,12 @@ export class BlueprintRenderer {
       {
         onForceChange: (forces) => this.handleForceChange(forces),
         onAnimate: () => this.handleAnimate(),
+        onFontChange: (family, style) => this.setFont(family, style),
       },
       this.organicForces,
       this.theme,
+      this.nodeFont,
+      this.nodeFontStyle,
     );
     if (this.viewMode === 'organic') {
       this.organicControls.show();
@@ -364,7 +379,7 @@ export class BlueprintRenderer {
     // Build node map and compute dimensions (with title wrapping)
     this.nodeMap = {};
     // Use a consistent font for measuring title widths
-    this.ctx.font = 'bold 11px system-ui';
+    this.ctx.font = buildFont(11);
     const titlePadding = 20; // horizontal padding inside header
     const maxTitleWidth = NODE_W - titlePadding;
 
@@ -1032,6 +1047,23 @@ export class BlueprintRenderer {
     }
     this.rebuildCollapsedNodeIds();
     this.dirty = true;
+  }
+
+  // ─── Font Settings ───────────────────────────────
+
+  /** Change the font used for node text */
+  setFont(family: string, style: FontStyle): void {
+    this.nodeFont = family;
+    this.nodeFontStyle = style;
+    setCanvasFont(family, style);
+    // Re-wrap titles since font metrics may have changed
+    this.initializeData();
+    this.dirty = true;
+    this.onFontChangeCb?.(family, style);
+  }
+
+  getFont(): { family: string; style: FontStyle } {
+    return { family: this.nodeFont, style: this.nodeFontStyle };
   }
 
   // ─── Tier 3: Split View ──────────────────────────

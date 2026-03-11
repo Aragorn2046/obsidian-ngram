@@ -98,6 +98,9 @@ export class BlueprintView extends ItemView {
         onSplitView: (nodeId) => this.openSplitView(nodeId),
         onLinkCreate2: (fromId, toId) => this.handleLinkCreate(fromId, toId),
         onAddCategory: (label, color) => this.handleAddCategory(label, color),
+        onFontChange: (font, style) => this.handleFontChange(font, style),
+        nodeFont: this.plugin.settings.nodeFont ?? 'system-ui',
+        nodeFontStyle: this.plugin.settings.nodeFontStyle ?? 'bold',
       });
       this.renderer.render();
 
@@ -134,6 +137,11 @@ export class BlueprintView extends ItemView {
     if (this.colorSaveTimer) {
       clearTimeout(this.colorSaveTimer);
       this.colorSaveTimer = null;
+    }
+
+    if (this.fontSaveTimer) {
+      clearTimeout(this.fontSaveTimer);
+      this.fontSaveTimer = null;
     }
 
     if (this.renderer) {
@@ -254,6 +262,19 @@ export class BlueprintView extends ItemView {
     // Debounce save — sliders fire many events
     if (this.forceSaveTimer) clearTimeout(this.forceSaveTimer);
     this.forceSaveTimer = setTimeout(async () => {
+      await this.plugin.saveSettings();
+    }, 300);
+  }
+
+  // ─── Font Persistence ──────────────────────────────────────
+
+  private fontSaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private handleFontChange(font: string, style: 'normal' | 'bold' | 'italic'): void {
+    this.plugin.settings.nodeFont = font;
+    this.plugin.settings.nodeFontStyle = style;
+    if (this.fontSaveTimer) clearTimeout(this.fontSaveTimer);
+    this.fontSaveTimer = setTimeout(async () => {
       await this.plugin.saveSettings();
     }, 300);
   }
