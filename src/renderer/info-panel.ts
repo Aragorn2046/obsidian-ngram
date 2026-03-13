@@ -129,6 +129,7 @@ export class InfoPanel {
       height: this.panelHeight + 'px',
       maxHeight: this.panelHeight + 'px',
       overflowY: 'auto',
+      overscrollBehavior: 'contain',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
     });
   }

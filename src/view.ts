@@ -47,9 +47,25 @@ export class BlueprintView extends ItemView {
     this.canvas = this.wrapper.createEl("canvas");
     this.canvas.addClass("blueprint-canvas");
 
-    // Prevent scroll wheel from propagating to Obsidian's scroll container
-    // This stops the whole view from scrolling when wheeling over overlay panels
-    this.wrapper.addEventListener('wheel', (e) => {
+    // Prevent scroll wheel from propagating to Obsidian's scroll container.
+    // Attach to contentEl (not just wrapper) so toolbar and all child panels
+    // are covered. Overlay panels with overflow-y:auto (organic controls,
+    // filter panel, etc.) get a pass — they stop propagation themselves via
+    // the CSS 'overscroll-behavior: contain' rule added in styles.css, but
+    // we also let them scroll by only preventing default when the event
+    // target is NOT inside a scrollable panel.
+    contentEl.addEventListener('wheel', (e) => {
+      // Allow native scrolling inside overlay panels that have their own
+      // scroll container (e.g. organic controls, filter panel, info panel).
+      const target = e.target as HTMLElement;
+      const scrollableParent = target.closest(
+        '.blueprint-organic-controls, .bp-filter-panel, .bp-info-panel, .bp-gap-panel, .bp-legend'
+      );
+      if (scrollableParent) {
+        // Only prevent propagation — let the panel scroll naturally
+        e.stopPropagation();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
     }, { passive: false });

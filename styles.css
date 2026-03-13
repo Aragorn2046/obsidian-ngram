@@ -125,6 +125,7 @@
   border-left: 1px solid var(--background-modifier-border);
   padding: 12px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 100;
   display: none;
   font-size: 12px;

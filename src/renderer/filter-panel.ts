@@ -73,6 +73,7 @@ export class FilterPanel {
       maxHeight: '400px',
       maxWidth: '260px',
       overflowY: 'auto',
+      overscrollBehavior: 'contain',
       userSelect: 'none',
     });
   }

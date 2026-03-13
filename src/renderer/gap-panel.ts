@@ -244,6 +244,7 @@ export class GapPanel {
     Object.assign(scrollArea.style, {
       flex: '1',
       overflowY: 'auto',
+      overscrollBehavior: 'contain',
       minHeight: '0',
     });
 

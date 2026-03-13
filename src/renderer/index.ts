@@ -280,9 +280,8 @@ export class BlueprintRenderer {
       this.nodeFont,
       this.nodeFontStyle,
     );
-    if (this.viewMode === 'organic') {
-      this.organicControls.show();
-    }
+    // Controls panel starts hidden — user opens via "Controls" toolbar button
+    // (Previously auto-showed in organic mode, causing a confusing empty overlay)
     // Defer offset sync until legend + minimap exist (called after construction)
 
     // 5d. Create preview tooltip
@@ -556,7 +555,13 @@ export class BlueprintRenderer {
     this.organicForces = { ...forces };
     if (this.simulation) {
       this.simulation.setForces(forces);
-      this.organicRadii = this.simulation.getRadii();
+      // Recompute importance sizing if active (nodeSize slider affects it),
+      // otherwise use the simulation's default radii
+      if (this.importanceMetric) {
+        this.applyImportanceSizing();
+      } else {
+        this.organicRadii = this.simulation.getRadii();
+      }
     }
     if (this.onForceSettingsChangeCb) {
       this.onForceSettingsChangeCb(forces);
@@ -825,7 +830,12 @@ export class BlueprintRenderer {
       if (this.simulation && this.simulation.isActive()) {
         const moved = this.simulation.tick();
         if (moved) {
-          this.organicRadii = this.simulation.getRadii();
+          // Only use simulation radii when no importance metric is active.
+          // Importance-based sizing (pagerank/betweenness/connections) sets
+          // organicRadii directly — the simulation tick must not overwrite it.
+          if (!this.importanceMetric) {
+            this.organicRadii = this.simulation.getRadii();
+          }
           this.dirty = true;
         }
       }
@@ -1215,11 +1225,11 @@ export class BlueprintRenderer {
     this.runLayout();
     this.clearSelection();
 
-    // Show/hide organic controls
+    // Update organic controls forces but don't auto-show.
+    // Controls panel only opens via the explicit "Controls" toolbar button.
     if (this.organicControls) {
       if (mode === 'organic') {
         this.organicControls.setForces(this.organicForces);
-        this.organicControls.show();
       } else {
         this.organicControls.hide();
       }

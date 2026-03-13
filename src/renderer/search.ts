@@ -106,6 +106,7 @@ export class SearchPanel {
       color: this.theme.panelTextMuted,
       maxHeight: '180px',
       overflowY: 'auto',
+      overscrollBehavior: 'contain',
     });
   }
 
