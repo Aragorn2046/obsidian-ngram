@@ -31,7 +31,7 @@ export class StatsBar {
       zIndex: '10',
       fontSize: '10px',
       color: this.theme.textMuted,
-      letterSpacing: '0.5px',
+      letterSpacing: '0.05em',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
       whiteSpace: 'nowrap',
     });

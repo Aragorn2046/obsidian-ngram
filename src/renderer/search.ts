@@ -172,7 +172,7 @@ export class SearchPanel {
       });
 
       item.addEventListener('mouseenter', () => {
-        item.style.background = 'rgba(99,102,241,0.2)';
+        item.style.background = 'rgba(34,211,238,0.15)';
         item.style.color = this.theme.textPrimary;
       });
       item.addEventListener('mouseleave', () => {

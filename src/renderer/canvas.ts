@@ -514,7 +514,7 @@ export function drawWire(
       ctx.setLineDash([2 * vt.zoom, 3 * vt.zoom]);
       break;
     case 'tag':
-      ctx.strokeStyle = wire.color || '#8899aa'; // muted gray
+      ctx.strokeStyle = wire.color || '#4b5563'; // darker gray
       ctx.setLineDash([]);
       break;
     default: // 'link'
@@ -526,6 +526,8 @@ export function drawWire(
   if (state.isHovered) {
     ctx.globalAlpha = 1;
     ctx.lineWidth = Math.max(2.5, 3.5 * vt.zoom);
+    ctx.shadowColor = 'rgba(34,211,238,0.3)';
+    ctx.shadowBlur = 8;
   } else if (state.hasSelection) {
     ctx.lineWidth = state.isActive
       ? Math.max(1.5, 2.5 * vt.zoom)
@@ -539,6 +541,8 @@ export function drawWire(
   }
 
   ctx.stroke();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
   ctx.setLineDash([]);
   ctx.globalAlpha = 1;
 }
@@ -605,7 +609,7 @@ export function drawNode(
     // Selection/path/search highlights at compact level
     if (state.isSelected || state.isPathTarget || state.isSearchMatch) {
       ctx.strokeStyle = state.isSearchMatch ? theme.searchHighlight
-        : state.isPathTarget ? theme.pathColor : cat.color;
+        : state.isPathTarget ? theme.pathColor : 'rgba(34,211,238,0.7)';
       ctx.lineWidth = 2;
       ctx.globalAlpha = 0.7;
       roundRect(ctx, x - 2, y - 2, w + 4, compactH + 4, r + 2);
@@ -731,13 +735,17 @@ export function drawNode(
     });
   }
 
-  // 10. Selection highlight
+  // 10. Selection highlight (cyan glow)
   if (state.isSelected) {
-    ctx.strokeStyle = cat.color;
+    ctx.shadowColor = 'rgba(34,211,238,0.25)';
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = 'rgba(34,211,238,0.7)';
     ctx.lineWidth = 2;
     ctx.globalAlpha = theme.selectionGlowAlpha;
     roundRect(ctx, x - 2, y - 2, w + 4, h + 4, r + 2);
     ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
   }
 
   // 11. Path target highlight
@@ -795,7 +803,7 @@ export function drawOrganicNode(
 
   // 2. Outer glow / gradient fill
   const grad = ctx.createRadialGradient(cx, cy, r * 0.3, cx, cy, r);
-  grad.addColorStop(0, cat.dark);
+  grad.addColorStop(0, '#000000');
   grad.addColorStop(0.7, cat.color + 'cc');
   grad.addColorStop(1, cat.color + '40');
   ctx.beginPath();
@@ -808,10 +816,10 @@ export function drawOrganicNode(
   ctx.lineWidth = state.isSelected ? 3 : 1.5;
   ctx.stroke();
 
-  // 4. Inner highlight (top-left light source)
+  // 4. Inner highlight (top-left light source, cyan tint)
   const highlight = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-  highlight.addColorStop(0, 'rgba(255,255,255,0.25)');
-  highlight.addColorStop(1, 'rgba(255,255,255,0)');
+  highlight.addColorStop(0, 'rgba(34,211,238,0.15)');
+  highlight.addColorStop(1, 'rgba(34,211,238,0)');
   ctx.beginPath();
   ctx.arc(cx, cy, r, 0, Math.PI * 2);
   ctx.fillStyle = highlight;
@@ -846,14 +854,18 @@ export function drawOrganicNode(
     ctx.globalAlpha = state.isActive ? 1.0 : 0.15;
   }
 
-  // 7. Selection highlight
+  // 7. Selection highlight (cyan glow)
   if (state.isSelected) {
-    ctx.strokeStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(34,211,238,0.25)';
+    ctx.shadowBlur = 12;
+    ctx.strokeStyle = 'rgba(34,211,238,0.7)';
     ctx.lineWidth = 2;
     ctx.globalAlpha = 0.8;
     ctx.beginPath();
     ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
   }
 
   // 8. Path target highlight
@@ -957,6 +969,8 @@ export function drawOrganicWire(
   if (state.isHovered) {
     ctx.globalAlpha = 1;
     ctx.lineWidth = Math.max(2, (baseThickness + 1.5) * vt.zoom);
+    ctx.shadowColor = 'rgba(34,211,238,0.3)';
+    ctx.shadowBlur = 8;
   } else if (state.hasSelection) {
     ctx.lineWidth = state.isActive
       ? Math.max(1, baseThickness * vt.zoom)
@@ -968,6 +982,8 @@ export function drawOrganicWire(
   }
 
   ctx.stroke();
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
 
   // Draw arrowhead at the end
   if (showArrows && ctx.globalAlpha > 0.1) {

@@ -65,7 +65,7 @@ export class FilterPanel {
       zIndex: '15',
       background: this.theme.panelBg,
       border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '6px',
+      borderRadius: '8px',
       padding: '10px 14px',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
       fontSize: '11px',

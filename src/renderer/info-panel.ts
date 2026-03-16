@@ -120,7 +120,7 @@ export class InfoPanel {
       zIndex: '15',
       background: this.theme.panelBg,
       border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '6px',
+      borderRadius: '8px',
       padding: '16px 16px 12px',
       maxWidth: '520px',
       minWidth: '320px',

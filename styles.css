@@ -32,15 +32,17 @@
 }
 
 .blueprint-toolbar-btn-active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
+  background: rgba(6,78,92,0.3);
+  color: #22d3ee;
+  border-color: rgba(34,211,238,0.5);
+  box-shadow: 0 0 10px rgba(34,211,238,0.2);
 }
 
 .blueprint-toolbar-stats {
   font-size: 11px;
   color: var(--text-muted);
   margin-left: auto;
+  letter-spacing: 0.05em;
 }
 
 .blueprint-wrapper {
@@ -322,4 +324,70 @@
 
 .blueprint-minimap canvas {
   display: block;
+}
+
+/* ─── Shadowbroker Panel Overrides ───────────────────── */
+
+.bp-legend,
+.bp-info-panel,
+.bp-gap-panel,
+.bp-filter-panel,
+.bp-search,
+.blueprint-organic-controls {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.theme-dark .bp-legend,
+.theme-dark .bp-info-panel,
+.theme-dark .bp-gap-panel,
+.theme-dark .bp-filter-panel {
+  border-radius: 8px;
+}
+
+.theme-dark .blueprint-context-menu {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 8px;
+}
+
+.theme-dark .blueprint-preview-tooltip {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 8px;
+}
+
+/* ─── Scrollbar (Shadowbroker) ───────────────────────── */
+
+.bp-info-panel::-webkit-scrollbar,
+.bp-gap-panel ::-webkit-scrollbar,
+.bp-filter-panel::-webkit-scrollbar,
+.bp-search-results::-webkit-scrollbar,
+.blueprint-organic-controls::-webkit-scrollbar {
+  width: 5px;
+}
+
+.bp-info-panel::-webkit-scrollbar-track,
+.bp-gap-panel ::-webkit-scrollbar-track,
+.bp-filter-panel::-webkit-scrollbar-track,
+.bp-search-results::-webkit-scrollbar-track,
+.blueprint-organic-controls::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.bp-info-panel::-webkit-scrollbar-thumb,
+.bp-gap-panel ::-webkit-scrollbar-thumb,
+.bp-filter-panel::-webkit-scrollbar-thumb,
+.bp-search-results::-webkit-scrollbar-thumb,
+.blueprint-organic-controls::-webkit-scrollbar-thumb {
+  background: rgba(100,116,139,0.3);
+  border-radius: 3px;
+}
+
+.bp-info-panel::-webkit-scrollbar-thumb:hover,
+.bp-gap-panel ::-webkit-scrollbar-thumb:hover,
+.bp-filter-panel::-webkit-scrollbar-thumb:hover,
+.bp-search-results::-webkit-scrollbar-thumb:hover,
+.blueprint-organic-controls::-webkit-scrollbar-thumb:hover {
+  background: rgba(100,116,139,0.5);
 }

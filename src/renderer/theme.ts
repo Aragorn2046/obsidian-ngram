@@ -51,43 +51,43 @@ export interface ThemeColors {
 }
 
 const DARK_THEME: ThemeColors = {
-  background: '#1a1d23',
-  gridMinor: '#1f2228',
-  gridMajor: '#252830',
+  background: '#000000',
+  gridMinor: '#0a0d12',
+  gridMajor: '#111827',
 
-  nodeFill: '#1e2028',
-  nodeBorder: '#2a2d38',
-  nodeShadow: 'rgba(0,0,0,0.4)',
-  headerDivider: '#2a2d38',
+  nodeFill: '#0d1117',
+  nodeBorder: '#1f2937',
+  nodeShadow: 'rgba(0,0,0,0.6)',
+  headerDivider: '#1f2937',
 
-  pinFill: '#556',
-  pinStroke: '#889',
-  pinLabel: '#778',
+  pinFill: '#374151',
+  pinStroke: '#4b5563',
+  pinLabel: '#6b7280',
 
-  wireDefault: '#555',
+  wireDefault: '#374151',
   wireInactiveAlpha: 0.07,
   wireActiveAlpha: 0.85,
   wireNormalAlpha: 0.5,
 
   selectionGlowAlpha: 0.9,
-  pathColor: '#fbbf24',
-  searchHighlight: '#ffffff',
+  pathColor: '#22d3ee',
+  searchHighlight: '#22d3ee',
 
-  textPrimary: '#cdd',
-  textSecondary: '#899',
-  textMuted: '#556',
+  textPrimary: '#f3f4f6',
+  textSecondary: '#9ca3af',
+  textMuted: '#6b7280',
 
-  panelBg: 'rgba(20,22,28,0.95)',
-  panelBorder: '#2a2d35',
-  panelText: '#899',
-  panelTextMuted: '#667',
-  buttonBg: 'rgba(30,33,40,0.9)',
-  buttonBorder: '#2a2d35',
-  buttonText: '#899',
-  buttonHoverBg: '#2a2d35',
-  inputBg: 'rgba(30,33,40,0.95)',
-  inputBorder: '#2a2d35',
-  inputFocusBorder: '#6366f1',
+  panelBg: 'rgba(17,24,39,0.85)',
+  panelBorder: 'rgba(55,65,81,0.5)',
+  panelText: '#9ca3af',
+  panelTextMuted: '#6b7280',
+  buttonBg: 'rgba(31,41,55,0.5)',
+  buttonBorder: 'rgba(55,65,81,0.5)',
+  buttonText: '#9ca3af',
+  buttonHoverBg: 'rgba(8,51,68,0.3)',
+  inputBg: 'rgba(17,24,39,0.95)',
+  inputBorder: 'rgba(55,65,81,0.5)',
+  inputFocusBorder: '#22d3ee',
 };
 
 const LIGHT_THEME: ThemeColors = {
@@ -110,8 +110,8 @@ const LIGHT_THEME: ThemeColors = {
   wireNormalAlpha: 0.45,
 
   selectionGlowAlpha: 0.9,
-  pathColor: '#d97706',
-  searchHighlight: '#1a1d23',
+  pathColor: '#0891b2',
+  searchHighlight: '#0891b2',
 
   textPrimary: '#1a1d23',
   textSecondary: '#445',
@@ -127,7 +127,7 @@ const LIGHT_THEME: ThemeColors = {
   buttonHoverBg: '#e0e2e6',
   inputBg: 'rgba(255,255,255,0.95)',
   inputBorder: '#d0d3da',
-  inputFocusBorder: '#6366f1',
+  inputFocusBorder: '#0891b2',
 };
 
 /** Get theme colors for the given mode */

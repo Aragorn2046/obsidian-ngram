@@ -36,6 +36,7 @@ export class OrganicControlsPanel {
 
     this.el = document.createElement('div');
     this.el.className = 'blueprint-organic-controls';
+    this.el.style.display = 'none'; // Explicitly hidden — only shown via Controls toolbar button
     this.container.appendChild(this.el);
 
     this.render();

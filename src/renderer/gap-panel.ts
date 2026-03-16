@@ -80,7 +80,7 @@ export class GapPanel {
       zIndex: '15',
       background: this.theme.panelBg,
       border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '6px',
+      borderRadius: '8px',
       padding: '0',
       width: '340px',
       height: '420px',
@@ -196,7 +196,7 @@ export class GapPanel {
       fontSize: '13px',
       fontWeight: '600',
       color: this.theme.panelText,
-      letterSpacing: '0.2px',
+      letterSpacing: '0.05em',
     });
     titleEl.textContent = 'Gap Analysis';
     header.appendChild(titleEl);

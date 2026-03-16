@@ -47,9 +47,11 @@ export class Legend {
       zIndex: '10',
       background: this.theme.panelBg,
       border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '6px',
+      borderRadius: '8px',
       padding: '10px 14px',
       fontFamily: "'Segoe UI', system-ui, sans-serif",
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
       transition: 'right 0.15s ease',
     });
   }
