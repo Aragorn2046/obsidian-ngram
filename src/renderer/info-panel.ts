@@ -60,25 +60,11 @@ export class InfoPanel {
 
     // Resize handle (top edge)
     this.resizeHandle = document.createElement('div');
-    Object.assign(this.resizeHandle.style, {
-      position: 'absolute',
-      top: '0',
-      left: '0',
-      right: '0',
-      height: '6px',
-      cursor: 'ns-resize',
-      borderRadius: '6px 6px 0 0',
-    });
+    this.resizeHandle.className = 'bp-info-resize-handle';
     // Visual indicator line
     const grip = document.createElement('div');
-    Object.assign(grip.style, {
-      width: '32px',
-      height: '3px',
-      borderRadius: '2px',
-      background: this.theme.textMuted,
-      opacity: '0.3',
-      margin: '2px auto 0',
-    });
+    grip.className = 'bp-info-resize-grip';
+    grip.style.background = this.theme.textMuted;
     this.resizeHandle.appendChild(grip);
     this.el.appendChild(this.resizeHandle);
 
@@ -113,25 +99,13 @@ export class InfoPanel {
   // ─── Styles ───────────────────────────────────────────
 
   private applyStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      bottom: '12px',
-      left: '12px',
-      zIndex: '15',
-      background: this.theme.panelBg,
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '8px',
-      padding: '16px 16px 12px',
-      maxWidth: '520px',
-      minWidth: '320px',
-      color: this.theme.panelText,
-      fontSize: '11px',
-      height: this.panelHeight + 'px',
-      maxHeight: this.panelHeight + 'px',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-    });
+    // Structural styles live in .bp-info-panel CSS class.
+    // Apply dynamic theme colors inline.
+    this.el.style.background = this.theme.panelBg;
+    this.el.style.border = `1px solid ${this.theme.panelBorder}`;
+    this.el.style.color = this.theme.panelText;
+    this.el.style.height = this.panelHeight + 'px';
+    this.el.style.maxHeight = this.panelHeight + 'px';
   }
 
   // ─── Show/Hide ────────────────────────────────────────
@@ -161,52 +135,31 @@ export class InfoPanel {
 
     // ─── Header row (title + category + path) ───
     const header = document.createElement('div');
-    Object.assign(header.style, {
-      marginBottom: '8px',
-      paddingBottom: '8px',
-      borderBottom: `1px solid ${this.theme.panelBorder}`,
-    });
+    header.className = 'bp-info-header';
+    header.style.borderBottom = `1px solid ${this.theme.panelBorder}`;
 
     // Title
     const h2 = document.createElement('h2');
-    Object.assign(h2.style, {
-      fontSize: '14px',
-      fontWeight: '600',
-      marginBottom: '2px',
-      color: safeColor,
-    });
+    h2.className = 'bp-info-h2';
+    h2.style.color = safeColor;
     h2.textContent = node.title;
     header.appendChild(h2);
 
     // Category + connection count on same line
     const metaRow = document.createElement('div');
-    Object.assign(metaRow.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      marginBottom: '2px',
-    });
+    metaRow.className = 'bp-info-meta-row';
 
     const catDiv = document.createElement('span');
-    Object.assign(catDiv.style, {
-      fontSize: '10px',
-      textTransform: 'uppercase',
-      letterSpacing: '1px',
-      color: safeColor + 'bb',
-    });
+    catDiv.className = 'bp-info-cat-label';
+    catDiv.style.color = safeColor + 'bb';
     catDiv.textContent = cat.label;
     metaRow.appendChild(catDiv);
 
     // Connection count badge
     const badge = document.createElement('span');
-    Object.assign(badge.style, {
-      display: 'inline-block',
-      padding: '1px 6px',
-      borderRadius: '3px',
-      fontSize: '10px',
-      background: safeColor + '20',
-      color: safeColor,
-    });
+    badge.className = 'bp-info-conn-badge';
+    badge.style.background = safeColor + '20';
+    badge.style.color = safeColor;
     badge.textContent = connectionCount + ' connection' + (connectionCount !== 1 ? 's' : '');
     metaRow.appendChild(badge);
 
@@ -215,11 +168,8 @@ export class InfoPanel {
     // File path
     if (node.path) {
       const pathDiv = document.createElement('div');
-      Object.assign(pathDiv.style, {
-        color: this.theme.textMuted,
-        fontSize: '10px',
-        fontStyle: 'italic',
-      });
+      pathDiv.className = 'bp-info-path';
+      pathDiv.style.color = this.theme.textMuted;
       pathDiv.textContent = node.path;
       header.appendChild(pathDiv);
     }
@@ -232,10 +182,7 @@ export class InfoPanel {
 
     if (hasOutgoing || hasIncoming) {
       const columns = document.createElement('div');
-      Object.assign(columns.style, {
-        display: 'flex',
-        gap: '16px',
-      });
+      columns.className = 'bp-info-columns';
 
       if (hasOutgoing) {
         const col = this.buildConnColumn('Outgoing', connections.outgoing, '\u2192', categories);
@@ -264,37 +211,21 @@ export class InfoPanel {
     categories: Record<string, CategoryDef>,
   ): HTMLDivElement {
     const col = document.createElement('div');
+    col.className = 'bp-info-col';
 
     const h3 = document.createElement('h3');
-    Object.assign(h3.style, {
-      fontSize: '10px',
-      color: this.theme.panelTextMuted,
-      textTransform: 'uppercase',
-      letterSpacing: '0.5px',
-      marginBottom: '4px',
-      fontWeight: 'normal',
-    });
+    h3.className = 'bp-info-col-h3';
+    h3.style.color = this.theme.panelTextMuted;
     h3.textContent = `${title} (${items.length})`;
     col.appendChild(h3);
 
     const list = document.createElement('div');
-    list.style.maxHeight = '140px';
-    list.style.overflowY = 'auto';
+    list.className = 'bp-info-conn-list';
 
     for (const conn of items) {
       const row = document.createElement('div');
-      Object.assign(row.style, {
-        padding: '2px 0',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        cursor: 'pointer',
-        color: this.theme.panelText,
-        fontSize: '11px',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      });
+      row.className = 'bp-info-conn-row';
+      row.style.color = this.theme.panelText;
 
       row.addEventListener('mouseenter', () => {
         row.style.color = this.theme.textPrimary;
@@ -305,29 +236,21 @@ export class InfoPanel {
 
       // Arrow
       const arrow = document.createElement('span');
+      arrow.className = 'bp-info-conn-arrow';
       arrow.style.color = this.theme.textMuted;
-      arrow.style.flexShrink = '0';
-      arrow.style.fontSize = '10px';
       arrow.textContent = arrowChar;
       row.appendChild(arrow);
 
       // Color dot
       const dot = document.createElement('span');
-      Object.assign(dot.style, {
-        width: '5px',
-        height: '5px',
-        borderRadius: '1px',
-        flexShrink: '0',
-        display: 'inline-block',
-      });
+      dot.className = 'bp-info-conn-dot';
       const connCat = categories[conn.node.cat];
       dot.style.background = connCat ? connCat.color : '#888';
       row.appendChild(dot);
 
       // Node name
       const nameSpan = document.createElement('span');
-      nameSpan.style.overflow = 'hidden';
-      nameSpan.style.textOverflow = 'ellipsis';
+      nameSpan.className = 'bp-info-conn-name';
       nameSpan.textContent = conn.node.title;
       row.appendChild(nameSpan);
 

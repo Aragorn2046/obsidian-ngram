@@ -23,18 +23,9 @@ export class StatsBar {
   // ─── Styles ───────────────────────────────────────────
 
   private applyStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      bottom: '12px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: '10',
-      fontSize: '10px',
-      color: this.theme.textMuted,
-      letterSpacing: '0.05em',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      whiteSpace: 'nowrap',
-    });
+    // All structural styles live in .bp-stats CSS class.
+    // Only the dynamic theme color is applied inline.
+    this.el.style.color = this.theme.textMuted;
   }
 
   // ─── Public API ───────────────────────────────────────

@@ -70,32 +70,6 @@ export class GapPanel {
     this.onMouseUp = () => this.handleMouseUp();
   }
 
-  // ─── Styles ───────────────────────────────────────────
-
-  private applyPanelStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      right: '12px',
-      top: '50px',
-      zIndex: '15',
-      background: this.theme.panelBg,
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '8px',
-      padding: '0',
-      width: '340px',
-      height: '420px',
-      minWidth: '240px',
-      minHeight: '200px',
-      overflow: 'hidden',
-      color: this.theme.panelText,
-      fontSize: '12px',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-    });
-  }
-
   // ─── Drag & Resize ─────────────────────────────────────
 
   private convertToLeftTop(): void {
@@ -159,6 +133,16 @@ export class GapPanel {
     document.removeEventListener('mouseup', this.onMouseUp);
   }
 
+  // ─── Styles ───────────────────────────────────────────
+
+  private applyPanelStyles(): void {
+    // Structural styles live in .bp-gap-panel CSS class.
+    // Apply dynamic theme colors inline.
+    this.el.style.background = this.theme.panelBg;
+    this.el.style.border = `1px solid ${this.theme.panelBorder}`;
+    this.el.style.color = this.theme.panelText;
+  }
+
   // ─── Render ───────────────────────────────────────────
 
   private render(gaps: GapSuggestion[], nodeMap: Record<string, NodeDef>): void {
@@ -169,58 +153,22 @@ export class GapPanel {
 
     // ─── Header (drag handle) ──────────────────────────
     const header = document.createElement('div');
-    Object.assign(header.style, {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '10px 12px 8px',
-      borderBottom: `1px solid ${this.theme.panelBorder}`,
-      background: this.theme.panelBg,
-      cursor: 'grab',
-      userSelect: 'none',
-      flexShrink: '0',
-    });
+    header.className = 'bp-gap-header';
 
     header.addEventListener('mousedown', (e) => {
       // Don't start drag if clicking close button
       if ((e.target as HTMLElement).tagName === 'BUTTON') return;
-      header.style.cursor = 'grabbing';
       this.startDrag(e);
-    });
-    header.addEventListener('mouseup', () => {
-      header.style.cursor = 'grab';
     });
 
     const titleEl = document.createElement('span');
-    Object.assign(titleEl.style, {
-      fontSize: '13px',
-      fontWeight: '600',
-      color: this.theme.panelText,
-      letterSpacing: '0.05em',
-    });
+    titleEl.className = 'bp-gap-title';
     titleEl.textContent = 'Gap Analysis';
     header.appendChild(titleEl);
 
     const closeBtn = document.createElement('button');
-    Object.assign(closeBtn.style, {
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      color: this.theme.panelTextMuted,
-      fontSize: '16px',
-      lineHeight: '1',
-      padding: '0 2px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    });
+    closeBtn.className = 'bp-gap-close';
     closeBtn.textContent = '\u00d7';
-    closeBtn.addEventListener('mouseenter', () => {
-      closeBtn.style.color = this.theme.panelText;
-    });
-    closeBtn.addEventListener('mouseleave', () => {
-      closeBtn.style.color = this.theme.panelTextMuted;
-    });
     closeBtn.addEventListener('click', () => this.hide());
     header.appendChild(closeBtn);
 
@@ -228,46 +176,24 @@ export class GapPanel {
 
     // ─── Subtitle ─────────────────────────────────────
     this.subtitleEl = document.createElement('div');
-    Object.assign(this.subtitleEl.style, {
-      padding: '5px 12px 8px',
-      fontSize: '11px',
-      color: this.theme.panelTextMuted,
-      borderBottom: `1px solid ${this.theme.panelBorder}`,
-      flexShrink: '0',
-    });
+    this.subtitleEl.className = 'bp-gap-subtitle';
     this.cardCount = gaps.length;
     this.updateSubtitle();
     this.el.appendChild(this.subtitleEl);
 
     // ─── Scrollable content area ─────────────────────
     const scrollArea = document.createElement('div');
-    Object.assign(scrollArea.style, {
-      flex: '1',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain',
-      minHeight: '0',
-    });
+    scrollArea.className = 'bp-gap-scroll';
 
     // ─── Gap Cards ────────────────────────────────────
     if (gaps.length === 0) {
       const empty = document.createElement('div');
-      Object.assign(empty.style, {
-        padding: '16px 12px',
-        color: this.theme.panelTextMuted,
-        fontSize: '11px',
-        textAlign: 'center',
-        fontStyle: 'italic',
-      });
+      empty.className = 'bp-gap-empty';
       empty.textContent = 'Run the analysis on a graph with tagged notes.';
       scrollArea.appendChild(empty);
     } else {
       this.listEl = document.createElement('div');
-      Object.assign(this.listEl.style, {
-        padding: '6px 8px 8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-      });
+      this.listEl.className = 'bp-gap-list';
 
       for (const gap of gaps) {
         this.listEl.appendChild(this.buildGapCard(gap, nodeMap));
@@ -280,28 +206,19 @@ export class GapPanel {
 
     // ─── Resize handle (bottom-right corner) ─────────
     const resizeHandle = document.createElement('div');
-    Object.assign(resizeHandle.style, {
-      position: 'absolute',
-      right: '0',
-      bottom: '0',
-      width: '16px',
-      height: '16px',
-      cursor: 'nwse-resize',
-      zIndex: '2',
-    });
+    resizeHandle.className = 'bp-gap-resize-handle';
     // Draw the resize grip (three diagonal lines)
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('width', '16');
     svg.setAttribute('height', '16');
     svg.setAttribute('viewBox', '0 0 16 16');
-    svg.style.opacity = '0.4';
     for (const offset of [4, 8, 12]) {
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', String(offset));
       line.setAttribute('y1', '16');
       line.setAttribute('x2', '16');
       line.setAttribute('y2', String(offset));
-      line.setAttribute('stroke', this.theme.panelText);
+      line.setAttribute('stroke', 'currentColor');
       line.setAttribute('stroke-width', '1');
       svg.appendChild(line);
     }
@@ -322,49 +239,20 @@ export class GapPanel {
     const nodeB = nodeMap[gap.nodeB];
 
     const card = document.createElement('div');
-    Object.assign(card.style, {
-      background: this.theme.buttonBg,
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '5px',
-      padding: '8px 10px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '5px',
-    });
+    card.className = 'bp-gap-card';
+    card.style.background = this.theme.panelBg;
+    card.style.border = `1px solid ${this.theme.panelBorder}`;
 
     // ─── Node names row ──────────────────────────────
     const nodesRow = document.createElement('div');
-    Object.assign(nodesRow.style, {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '6px',
-      flexWrap: 'wrap',
-    });
+    nodesRow.className = 'bp-gap-nodes-row';
 
     const makeNodeLabel = (nodeId: string, node: NodeDef | undefined): HTMLSpanElement => {
       const span = document.createElement('span');
-      Object.assign(span.style, {
-        cursor: 'pointer',
-        color: this.theme.panelText,
-        fontSize: '12px',
-        fontWeight: '500',
-        borderBottom: `1px dotted ${this.theme.panelBorder}`,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-        maxWidth: '130px',
-        display: 'inline-block',
-      });
+      span.className = 'bp-gap-node-label';
       span.textContent = node ? node.title : nodeId;
       span.title = node ? node.title : nodeId;
-      span.addEventListener('mouseenter', () => {
-        span.style.color = this.theme.textPrimary;
-        span.style.borderBottomColor = this.theme.panelText;
-      });
-      span.addEventListener('mouseleave', () => {
-        span.style.color = this.theme.panelText;
-        span.style.borderBottomColor = this.theme.panelBorder;
-      });
+      span.style.color = this.theme.textPrimary;
       span.addEventListener('click', () => {
         this.callbacks.onNodeClick(nodeId);
       });
@@ -374,91 +262,98 @@ export class GapPanel {
     nodesRow.appendChild(makeNodeLabel(gap.nodeA, nodeA));
 
     const arrowEl = document.createElement('span');
-    Object.assign(arrowEl.style, {
-      color: this.theme.panelTextMuted,
-      fontSize: '11px',
-      flexShrink: '0',
-    });
+    arrowEl.className = 'bp-gap-arrow';
     arrowEl.textContent = '\u2194';
+    arrowEl.style.color = this.theme.textMuted;
     nodesRow.appendChild(arrowEl);
 
     nodesRow.appendChild(makeNodeLabel(gap.nodeB, nodeB));
 
+    // Score pill (right-aligned)
+    if (gap.score !== undefined) {
+      const scorePct = Math.round(gap.score * 100);
+      const scoreEl = document.createElement('span');
+      scoreEl.className = 'bp-gap-score';
+      scoreEl.textContent = `${scorePct}%`;
+      scoreEl.title = 'Similarity score';
+      scoreEl.style.color = this.theme.textMuted;
+      nodesRow.appendChild(scoreEl);
+    }
+
     card.appendChild(nodesRow);
 
-    // ─── Shared tags ──────────────────────────────────
-    if (gap.sharedTags.length > 0) {
-      const tagsRow = document.createElement('div');
-      Object.assign(tagsRow.style, {
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: '3px',
-      });
+    // ─── Signal badges row (tags + shared links) ──────
+    const hasTags = gap.sharedTags.length > 0;
+    const hasLinks = gap.sharedLinks && gap.sharedLinks.length > 0;
+
+    if (hasTags || hasLinks) {
+      const badgesRow = document.createElement('div');
+      badgesRow.className = 'bp-gap-tags-row';
 
       for (const tag of gap.sharedTags) {
         const badge = document.createElement('span');
-        Object.assign(badge.style, {
-          display: 'inline-block',
-          padding: '1px 5px',
-          borderRadius: '3px',
-          fontSize: '10px',
-          background: this.theme.inputBg,
-          border: `1px solid ${this.theme.panelBorder}`,
-          color: this.theme.panelTextMuted,
-          lineHeight: '1.5',
-        });
-        badge.textContent = '#' + tag;
-        tagsRow.appendChild(badge);
+        badge.className = 'bp-gap-tag-badge';
+        badge.textContent = tag;
+        badge.style.background = this.theme.buttonBg;
+        badge.style.border = `1px solid ${this.theme.buttonBorder}`;
+        badge.style.color = this.theme.panelText;
+        badgesRow.appendChild(badge);
       }
 
-      card.appendChild(tagsRow);
+      if (hasLinks) {
+        const linkCount = gap.sharedLinks.length;
+        // Show up to 2 named shared links, then "+N more"
+        const displayLinks = gap.sharedLinks.slice(0, 2);
+        for (const linkedId of displayLinks) {
+          const linkedNode = nodeMap[linkedId];
+          const badge = document.createElement('span');
+          badge.className = 'bp-gap-tag-badge bp-gap-link-badge';
+          const label = linkedNode ? linkedNode.title : linkedId;
+          badge.textContent = '\u2192 ' + label;
+          badge.title = 'Shared link: both notes link to "' + label + '"';
+          badge.style.background = this.theme.buttonBg;
+          badge.style.border = `1px solid ${this.theme.buttonBorder}`;
+          badge.style.color = this.theme.panelText;
+          badge.addEventListener('click', () => {
+            this.callbacks.onNodeClick(linkedId);
+          });
+          badgesRow.appendChild(badge);
+        }
+        if (linkCount > 2) {
+          const moreBadge = document.createElement('span');
+          moreBadge.className = 'bp-gap-tag-badge';
+          moreBadge.textContent = `+${linkCount - 2} shared`;
+          moreBadge.title = `${linkCount - 2} more shared link targets`;
+          moreBadge.style.background = this.theme.buttonBg;
+          moreBadge.style.border = `1px solid ${this.theme.buttonBorder}`;
+          moreBadge.style.color = this.theme.panelText;
+          badgesRow.appendChild(moreBadge);
+        }
+      }
+
+      card.appendChild(badgesRow);
     }
 
     // ─── Reason text ──────────────────────────────────
     if (gap.reason) {
       const reasonEl = document.createElement('div');
-      Object.assign(reasonEl.style, {
-        fontSize: '10px',
-        color: this.theme.textMuted,
-        fontStyle: 'italic',
-        lineHeight: '1.4',
-      });
+      reasonEl.className = 'bp-gap-reason';
       reasonEl.textContent = gap.reason;
+      reasonEl.style.color = this.theme.textMuted;
       card.appendChild(reasonEl);
     }
 
     // ─── Action button row ─────────────────────────────
     const actionRow = document.createElement('div');
-    Object.assign(actionRow.style, {
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: '6px',
-      marginTop: '2px',
-    });
+    actionRow.className = 'bp-gap-action-row';
 
     const makeActionBtn = (text: string, danger = false): HTMLButtonElement => {
       const btn = document.createElement('button');
-      Object.assign(btn.style, {
-        background: this.theme.buttonBg,
-        border: `1px solid ${this.theme.buttonBorder}`,
-        borderRadius: '4px',
-        padding: '3px 10px',
-        cursor: 'pointer',
-        color: danger ? (this.theme.textError ?? '#e55') : this.theme.buttonText,
-        fontSize: '11px',
-        fontFamily: 'inherit',
-        lineHeight: '1.4',
-        transition: 'background 0.1s, opacity 0.15s',
-      });
+      btn.className = danger ? 'bp-gap-btn bp-gap-btn--danger' : 'bp-gap-btn';
       btn.textContent = text;
-      btn.addEventListener('mouseenter', () => {
-        btn.style.background = this.theme.buttonHoverBg;
-        btn.style.color = danger ? (this.theme.textError ?? '#e55') : this.theme.panelText;
-      });
-      btn.addEventListener('mouseleave', () => {
-        btn.style.background = this.theme.buttonBg;
-        btn.style.color = danger ? (this.theme.textError ?? '#e55') : this.theme.buttonText;
-      });
+      btn.style.background = this.theme.buttonBg;
+      btn.style.border = `1px solid ${this.theme.buttonBorder}`;
+      btn.style.color = this.theme.buttonText;
       return btn;
     };
 
@@ -471,13 +366,8 @@ export class GapPanel {
 
     // Status label
     const statusEl = document.createElement('span');
-    Object.assign(statusEl.style, {
-      fontSize: '10px',
-      color: '#4ade80',
-      fontWeight: '500',
-      display: 'none',
-      alignSelf: 'center',
-    });
+    statusEl.className = 'bp-gap-status';
+    statusEl.style.display = 'none';
     statusEl.textContent = 'Linked \u2713';
 
     linkBtn.addEventListener('click', () => {
@@ -553,8 +443,13 @@ export class GapPanel {
 
   /** Toggle visibility. */
   toggle(): void {
-    if (this.visible) this.hide();
-    else this.el.style.display = 'flex'; // show without re-rendering; caller should use show() with data
+    if (this.visible) {
+      this.hide();
+    } else {
+      // Show without re-rendering — caller should use show() with data for initial display
+      this.visible = true;
+      this.el.style.display = 'flex';
+    }
   }
 
   /** Whether the panel is currently visible. */
@@ -562,7 +457,7 @@ export class GapPanel {
     return this.visible;
   }
 
-  /** Update theme colors and re-apply panel-level styles. */
+  /** Update theme colors. */
   setTheme(theme: ThemeColors): void {
     this.theme = theme;
     this.applyPanelStyles();

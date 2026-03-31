@@ -58,24 +58,11 @@ export class FilterPanel {
   // ─── Styles ───────────────────────────────────────────
 
   private applyStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      top: '12px',
-      left: '12px',
-      zIndex: '15',
-      background: this.theme.panelBg,
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '8px',
-      padding: '10px 14px',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      fontSize: '11px',
-      color: this.theme.panelText,
-      maxHeight: '400px',
-      maxWidth: '260px',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain',
-      userSelect: 'none',
-    });
+    // Structural styles live in .bp-filter-panel CSS class.
+    // Apply dynamic theme colors inline.
+    this.el.style.background = this.theme.panelBg;
+    this.el.style.border = `1px solid ${this.theme.panelBorder}`;
+    this.el.style.color = this.theme.panelText;
   }
 
   // ─── Data ─────────────────────────────────────────────
@@ -122,19 +109,12 @@ export class FilterPanel {
 
     // ── Header ──
     const header = document.createElement('div');
-    Object.assign(header.style, {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '8px',
-      paddingBottom: '6px',
-      borderBottom: `1px solid ${this.theme.panelBorder}`,
-    });
+    header.className = 'bp-filter-header';
+    header.style.borderBottom = `1px solid ${this.theme.panelBorder}`;
 
     const title = document.createElement('span');
+    title.className = 'bp-filter-title';
     title.textContent = 'Filters';
-    title.style.fontWeight = 'bold';
-    title.style.fontSize = '12px';
     header.appendChild(title);
 
     const clearBtn = this.createButton('Clear All');
@@ -146,20 +126,14 @@ export class FilterPanel {
     // ── Tags Section ──
     if (this.allTags.length > 0) {
       const tagSection = document.createElement('div');
-      tagSection.style.marginBottom = '10px';
+      tagSection.className = 'bp-filter-tag-section';
 
       const tagHeader = document.createElement('div');
-      Object.assign(tagHeader.style, {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '4px',
-      });
+      tagHeader.className = 'bp-filter-tag-header';
 
       const tagLabel = document.createElement('span');
+      tagLabel.className = 'bp-filter-tag-label';
       tagLabel.textContent = 'Tags';
-      tagLabel.style.fontWeight = '600';
-      tagLabel.style.fontSize = '11px';
       tagHeader.appendChild(tagLabel);
 
       // Mode toggle (Any/All)
@@ -181,42 +155,26 @@ export class FilterPanel {
 
       // Tag checkboxes
       const tagList = document.createElement('div');
-      tagList.style.maxHeight = '180px';
-      tagList.style.overflowY = 'auto';
+      tagList.className = 'bp-filter-tag-list';
 
       for (const tag of this.allTags) {
         const row = document.createElement('div');
-        Object.assign(row.style, {
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          padding: '2px 0',
-          cursor: 'pointer',
-        });
+        row.className = 'bp-filter-tag-row';
 
         const check = document.createElement('div');
-        Object.assign(check.style, {
-          width: '10px',
-          height: '10px',
-          borderRadius: '2px',
-          border: `1px solid ${this.theme.textMuted}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '8px',
-          flexShrink: '0',
-        });
+        check.className = 'bp-filter-checkbox';
+        check.style.border = `1px solid ${this.theme.textMuted}`;
         const isActive = this.state.activeTags.has(tag);
         this.syncCheck(check, isActive);
 
         const label = document.createElement('span');
+        label.className = 'bp-filter-tag-name';
         label.textContent = tag;
-        label.style.flex = '1';
 
         const count = document.createElement('span');
+        count.className = 'bp-filter-tag-count';
         count.textContent = String(this.tagCounts.get(tag) ?? 0);
         count.style.color = this.theme.textMuted;
-        count.style.fontSize = '10px';
 
         row.appendChild(check);
         row.appendChild(label);
@@ -251,26 +209,16 @@ export class FilterPanel {
       const propSection = document.createElement('div');
 
       const propLabel = document.createElement('span');
+      propLabel.className = 'bp-filter-prop-label';
       propLabel.textContent = 'Property Filter';
-      propLabel.style.fontWeight = '600';
-      propLabel.style.fontSize = '11px';
-      propLabel.style.display = 'block';
-      propLabel.style.marginBottom = '4px';
       propSection.appendChild(propLabel);
 
       // Property key dropdown
       const keySelect = document.createElement('select');
-      Object.assign(keySelect.style, {
-        width: '100%',
-        marginBottom: '4px',
-        padding: '3px 4px',
-        fontSize: '11px',
-        background: this.theme.buttonBg,
-        color: this.theme.buttonText,
-        border: `1px solid ${this.theme.buttonBorder}`,
-        borderRadius: '3px',
-        fontFamily: 'inherit',
-      });
+      keySelect.className = 'bp-filter-select';
+      keySelect.style.background = this.theme.buttonBg;
+      keySelect.style.color = this.theme.buttonText;
+      keySelect.style.border = `1px solid ${this.theme.buttonBorder}`;
 
       const emptyOpt = document.createElement('option');
       emptyOpt.value = '';
@@ -294,19 +242,12 @@ export class FilterPanel {
       // Property value input
       const valueInput = document.createElement('input');
       valueInput.type = 'text';
+      valueInput.className = 'bp-filter-input';
       valueInput.placeholder = 'value contains...';
       valueInput.value = this.state.propertyValue;
-      Object.assign(valueInput.style, {
-        width: '100%',
-        padding: '3px 4px',
-        fontSize: '11px',
-        background: this.theme.buttonBg,
-        color: this.theme.buttonText,
-        border: `1px solid ${this.theme.buttonBorder}`,
-        borderRadius: '3px',
-        fontFamily: 'inherit',
-        boxSizing: 'border-box',
-      });
+      valueInput.style.background = this.theme.buttonBg;
+      valueInput.style.color = this.theme.buttonText;
+      valueInput.style.border = `1px solid ${this.theme.buttonBorder}`;
 
       let inputTimer: ReturnType<typeof setTimeout> | null = null;
       valueInput.addEventListener('input', () => {
@@ -325,13 +266,9 @@ export class FilterPanel {
     const activeCount = this.getActiveFilterCount();
     if (activeCount > 0) {
       const badge = document.createElement('div');
-      Object.assign(badge.style, {
-        marginTop: '8px',
-        paddingTop: '6px',
-        borderTop: `1px solid ${this.theme.panelBorder}`,
-        fontSize: '10px',
-        color: this.theme.textMuted,
-      });
+      badge.className = 'bp-filter-active-badge';
+      badge.style.borderTop = `1px solid ${this.theme.panelBorder}`;
+      badge.style.color = this.theme.textMuted;
       badge.textContent = `${activeCount} active filter${activeCount > 1 ? 's' : ''}`;
       this.el.appendChild(badge);
     }
@@ -341,17 +278,11 @@ export class FilterPanel {
 
   private createButton(text: string): HTMLButtonElement {
     const btn = document.createElement('button');
+    btn.className = 'bp-filter-btn';
     btn.textContent = text;
-    Object.assign(btn.style, {
-      background: this.theme.buttonBg,
-      border: `1px solid ${this.theme.buttonBorder}`,
-      color: this.theme.buttonText,
-      padding: '2px 8px',
-      borderRadius: '3px',
-      fontSize: '10px',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-    });
+    btn.style.background = this.theme.buttonBg;
+    btn.style.border = `1px solid ${this.theme.buttonBorder}`;
+    btn.style.color = this.theme.buttonText;
     btn.addEventListener('mouseenter', () => {
       btn.style.background = this.theme.buttonHoverBg;
     });

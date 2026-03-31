@@ -92,29 +92,17 @@ export class ContextMenu {
       this.el.appendChild(sep);
 
       const catHeader = document.createElement('div');
-      catHeader.className = 'blueprint-context-item';
-      catHeader.style.fontWeight = '600';
-      catHeader.style.fontSize = '10px';
-      catHeader.style.textTransform = 'uppercase';
-      catHeader.style.letterSpacing = '0.5px';
-      catHeader.style.opacity = '0.6';
-      catHeader.style.cursor = 'default';
+      catHeader.className = 'blueprint-context-item blueprint-context-cat-header';
       catHeader.textContent = 'Set Category';
       this.el.appendChild(catHeader);
 
       for (const [catId, catInfo] of Object.entries(cats)) {
         const catRow = document.createElement('div');
-        catRow.className = 'blueprint-context-item';
-        catRow.style.display = 'flex';
-        catRow.style.alignItems = 'center';
-        catRow.style.gap = '6px';
+        catRow.className = 'blueprint-context-item blueprint-context-cat-row';
 
         const dot = document.createElement('span');
-        dot.style.width = '8px';
-        dot.style.height = '8px';
-        dot.style.borderRadius = '50%';
+        dot.className = 'blueprint-context-cat-dot';
         dot.style.background = catInfo.color;
-        dot.style.flexShrink = '0';
         catRow.appendChild(dot);
 
         const label = document.createElement('span');

@@ -40,20 +40,11 @@ export class Legend {
   // ─── Styles ───────────────────────────────────────────
 
   private applyStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      top: '12px',
-      right: '12px',
-      zIndex: '10',
-      background: this.theme.panelBg,
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '8px',
-      padding: '10px 14px',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      transition: 'right 0.15s ease',
-    });
+    // Structural styles live in .bp-legend CSS class.
+    // Apply dynamic theme colors inline.
+    this.el.style.background = this.theme.panelBg;
+    this.el.style.border = `1px solid ${this.theme.panelBorder}`;
+    this.el.style.color = this.theme.panelText;
   }
 
   // ─── Update ───────────────────────────────────────────
@@ -69,13 +60,7 @@ export class Legend {
     // All/None buttons
     const btnRow = document.createElement('div');
     btnRow.className = 'bp-leg-btns';
-    Object.assign(btnRow.style, {
-      display: 'flex',
-      gap: '4px',
-      marginBottom: '6px',
-      borderBottom: `1px solid ${this.theme.panelBorder}`,
-      paddingBottom: '6px',
-    });
+    btnRow.style.borderBottom = `1px solid ${this.theme.panelBorder}`;
 
     const btnAll = this.createButton('All');
     btnAll.addEventListener('click', () => this.callbacks.onAllCategories(true));
@@ -93,62 +78,25 @@ export class Legend {
       const row = document.createElement('div');
       row.className = 'bp-leg';
       row.dataset.catKey = key;
-      Object.assign(row.style, {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        margin: '3px 0',
-        fontSize: '11px',
-        color: this.theme.panelText,
-        cursor: 'pointer',
-        userSelect: 'none',
-      });
+      row.style.color = this.theme.panelText;
 
       // Checkbox
       const check = document.createElement('div');
       check.className = 'bp-leg-check';
-      Object.assign(check.style, {
-        width: '10px',
-        height: '10px',
-        borderRadius: '2px',
-        border: `1px solid ${this.theme.textMuted}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '8px',
-        flexShrink: '0',
-      });
+      check.style.border = `1px solid ${this.theme.textMuted}`;
       this.syncCheck(check, cat.visible !== false);
       row.appendChild(check);
 
       // Color dot (clickable — opens color picker)
       const dot = document.createElement('div');
       dot.className = 'bp-leg-dot';
-      Object.assign(dot.style, {
-        width: '12px',
-        height: '12px',
-        borderRadius: '3px',
-        background: cat.color,
-        flexShrink: '0',
-        cursor: 'pointer',
-        border: '1px solid rgba(255,255,255,0.2)',
-        position: 'relative',
-      });
+      dot.style.background = cat.color;
       dot.title = 'Click to change color';
 
-      // Hidden color input
+      // Hidden color input — structural styles via .bp-leg-dot input[type="color"] in CSS
       const colorInput = document.createElement('input');
       colorInput.type = 'color';
       colorInput.value = cat.color;
-      Object.assign(colorInput.style, {
-        position: 'absolute',
-        width: '0',
-        height: '0',
-        padding: '0',
-        border: 'none',
-        opacity: '0',
-        pointerEvents: 'none',
-      });
       dot.appendChild(colorInput);
 
       dot.addEventListener('click', (e) => {
@@ -205,17 +153,9 @@ export class Legend {
     // "Add Category" button
     if (this.callbacks.onAddCategory) {
       const addBtn = document.createElement('div');
-      Object.assign(addBtn.style, {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        margin: '6px 0 0',
-        padding: '4px 0',
-        fontSize: '10px',
-        color: this.theme.textMuted,
-        cursor: 'pointer',
-        borderTop: `1px solid ${this.theme.panelBorder}`,
-      });
+      addBtn.className = 'bp-leg-add-btn';
+      addBtn.style.color = this.theme.textMuted;
+      addBtn.style.borderTop = `1px solid ${this.theme.panelBorder}`;
       addBtn.textContent = '+ Add Category';
       addBtn.addEventListener('mouseenter', () => {
         addBtn.style.color = this.theme.textPrimary;
@@ -234,71 +174,38 @@ export class Legend {
   private showAddCategoryDialog(): void {
     // Create a simple inline form
     const dialog = document.createElement('div');
-    Object.assign(dialog.style, {
-      marginTop: '6px',
-      padding: '8px',
-      background: 'rgba(0,0,0,0.2)',
-      borderRadius: '4px',
-    });
+    dialog.className = 'bp-leg-add-dialog';
 
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
+    nameInput.className = 'bp-leg-add-name-input';
     nameInput.placeholder = 'Category name';
-    Object.assign(nameInput.style, {
-      width: '100%',
-      background: 'rgba(255,255,255,0.1)',
-      border: `1px solid ${this.theme.panelBorder}`,
-      borderRadius: '3px',
-      padding: '4px 6px',
-      color: this.theme.panelText,
-      fontSize: '11px',
-      fontFamily: 'inherit',
-      marginBottom: '6px',
-      boxSizing: 'border-box',
-    });
+    nameInput.style.border = `1px solid ${this.theme.panelBorder}`;
+    nameInput.style.color = this.theme.panelText;
     dialog.appendChild(nameInput);
 
     const colorRow = document.createElement('div');
-    colorRow.style.display = 'flex';
-    colorRow.style.gap = '6px';
-    colorRow.style.alignItems = 'center';
+    colorRow.className = 'bp-leg-add-color-row';
 
     const colorInput = document.createElement('input');
     colorInput.type = 'color';
+    colorInput.className = 'bp-leg-add-color-input';
     colorInput.value = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
-    colorInput.style.width = '28px';
-    colorInput.style.height = '24px';
-    colorInput.style.border = 'none';
-    colorInput.style.cursor = 'pointer';
     colorRow.appendChild(colorInput);
 
     const saveBtn = document.createElement('button');
+    saveBtn.className = 'bp-leg-add-save-btn';
     saveBtn.textContent = 'Add';
-    Object.assign(saveBtn.style, {
-      flex: '1',
-      background: this.theme.buttonBg,
-      border: `1px solid ${this.theme.buttonBorder}`,
-      color: this.theme.buttonText,
-      padding: '3px 8px',
-      borderRadius: '3px',
-      fontSize: '10px',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-    });
+    saveBtn.style.background = this.theme.buttonBg;
+    saveBtn.style.border = `1px solid ${this.theme.buttonBorder}`;
+    saveBtn.style.color = this.theme.buttonText;
     colorRow.appendChild(saveBtn);
 
     const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'bp-leg-add-cancel-btn';
     cancelBtn.textContent = 'Cancel';
-    Object.assign(cancelBtn.style, {
-      background: 'transparent',
-      border: `1px solid ${this.theme.panelBorder}`,
-      color: this.theme.textMuted,
-      padding: '3px 8px',
-      borderRadius: '3px',
-      fontSize: '10px',
-      cursor: 'pointer',
-      fontFamily: 'inherit',
-    });
+    cancelBtn.style.border = `1px solid ${this.theme.panelBorder}`;
+    cancelBtn.style.color = this.theme.textMuted;
     colorRow.appendChild(cancelBtn);
 
     dialog.appendChild(colorRow);
@@ -336,18 +243,9 @@ export class Legend {
     const btn = document.createElement('button');
     btn.className = 'bp-leg-btn';
     btn.textContent = text;
-    Object.assign(btn.style, {
-      background: this.theme.buttonBg,
-      border: `1px solid ${this.theme.buttonBorder}`,
-      color: this.theme.buttonText,
-      padding: '2px 8px',
-      borderRadius: '3px',
-      fontSize: '10px',
-      cursor: 'pointer',
-      flex: '1',
-      textAlign: 'center',
-      fontFamily: 'inherit',
-    });
+    btn.style.background = this.theme.buttonBg;
+    btn.style.border = `1px solid ${this.theme.buttonBorder}`;
+    btn.style.color = this.theme.buttonText;
 
     btn.addEventListener('mouseenter', () => {
       btn.style.background = this.theme.buttonHoverBg;

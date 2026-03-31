@@ -51,10 +51,11 @@ export class SearchPanel {
     this.input.placeholder = 'Search nodes... (Ctrl+F)';
     this.applyInputStyles();
 
-    // Create results container
+    // Create results container (hidden until results arrive)
     this.resultsList = document.createElement('div');
     this.resultsList.className = 'bp-search-results';
     this.applyResultsStyles();
+    this.resultsList.style.display = 'none';
 
     this.el.appendChild(this.input);
     this.el.appendChild(this.resultsList);
@@ -68,29 +69,18 @@ export class SearchPanel {
   // ─── Styles ───────────────────────────────────────────
 
   private applyWrapperStyles(): void {
-    Object.assign(this.el.style, {
-      position: 'absolute',
-      top: '12px',
-      left: '12px',
-      zIndex: '10',
-      fontFamily: "'Segoe UI', system-ui, sans-serif",
-    });
+    // All structural styles live in .bp-search CSS class.
+    // No dynamic styles needed on the wrapper.
   }
 
   private applyInputStyles(): void {
-    Object.assign(this.input.style, {
-      background: this.theme.inputBg,
-      border: `1px solid ${this.theme.inputBorder}`,
-      color: this.theme.textPrimary,
-      padding: '5px 10px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      width: '220px',
-      outline: 'none',
-      fontFamily: 'inherit',
-    });
+    // Structural styles live in .bp-search-box CSS class.
+    // Apply dynamic theme colors inline.
+    this.input.style.background = this.theme.inputBg;
+    this.input.style.border = `1px solid ${this.theme.inputBorder}`;
+    this.input.style.color = this.theme.textPrimary;
 
-    // Focus style
+    // Focus/blur border color — dynamic, must stay inline
     this.input.addEventListener('focus', () => {
       this.input.style.borderColor = this.theme.inputFocusBorder;
     });
@@ -100,14 +90,11 @@ export class SearchPanel {
   }
 
   private applyResultsStyles(): void {
-    Object.assign(this.resultsList.style, {
-      marginTop: '4px',
-      fontSize: '11px',
-      color: this.theme.panelTextMuted,
-      maxHeight: '180px',
-      overflowY: 'auto',
-      overscrollBehavior: 'contain',
-    });
+    // Structural styles live in .bp-search-results CSS class.
+    // Apply dynamic theme colors inline.
+    this.resultsList.style.background = this.theme.panelBg;
+    this.resultsList.style.border = `1px solid ${this.theme.panelBorder}`;
+    this.resultsList.style.color = this.theme.panelTextMuted;
   }
 
   // ─── Event Handlers ───────────────────────────────────
@@ -146,13 +133,12 @@ export class SearchPanel {
 
   private renderResults(results: SearchResult[]): void {
     this.clearResults();
+    this.resultsList.style.display = 'block';
 
     if (results.length === 0) {
       const none = document.createElement('div');
-      Object.assign(none.style, {
-        padding: '4px 6px',
-        color: this.theme.textMuted,
-      });
+      none.className = 'bp-search-no-results';
+      none.style.color = this.theme.textMuted;
       none.textContent = 'No matches';
       this.resultsList.appendChild(none);
       return;
@@ -161,15 +147,7 @@ export class SearchPanel {
     for (const result of results) {
       const item = document.createElement('div');
       item.className = 'bp-search-item';
-      Object.assign(item.style, {
-        padding: '3px 6px',
-        cursor: 'pointer',
-        borderRadius: '3px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '6px',
-        color: this.theme.panelTextMuted,
-      });
+      item.style.color = this.theme.panelTextMuted;
 
       item.addEventListener('mouseenter', () => {
         item.style.background = 'rgba(34,211,238,0.15)';
@@ -182,13 +160,7 @@ export class SearchPanel {
 
       // Category color dot
       const dot = document.createElement('span');
-      Object.assign(dot.style, {
-        width: '6px',
-        height: '6px',
-        borderRadius: '2px',
-        flexShrink: '0',
-        display: 'inline-block',
-      });
+      dot.className = 'bp-search-dot';
       const cat = this.categories[result.node.cat];
       dot.style.background = cat ? cat.color : '#888';
       item.appendChild(dot);
@@ -209,6 +181,7 @@ export class SearchPanel {
     while (this.resultsList.firstChild) {
       this.resultsList.removeChild(this.resultsList.firstChild);
     }
+    this.resultsList.style.display = 'none';
   }
 
   // ─── Public API ───────────────────────────────────────
