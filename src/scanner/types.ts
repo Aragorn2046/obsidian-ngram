@@ -53,9 +53,9 @@ export type InclusionReason =
   | "hub";
 
 export const DEFAULT_CATEGORIES: CategoryRule[] = [
-  { id: "config", label: "Config", color: "#6366f1", dark: "#4338ca", folderPatterns: [], filePatterns: ["CLAUDE.md", "MEMORY.md", "*.config.*"], tags: [] },
+  { id: "config", label: "Config", color: "#6366f1", dark: "#4338ca", folderPatterns: ["config", ".config"], filePatterns: ["*.config.*", "*.yml", "*.yaml"], tags: [] },
   { id: "cmd", label: "Commands", color: "#22d3ee", dark: "#0891b2", folderPatterns: ["commands"], filePatterns: [], tags: [] },
-  { id: "kb", label: "Knowledge Base", color: "#a78bfa", dark: "#7c3aed", folderPatterns: ["knowledge base", "kb", "knowledge-base", "claude knowledge base"], filePatterns: [], tags: [] },
+  { id: "kb", label: "Knowledge Base", color: "#a78bfa", dark: "#7c3aed", folderPatterns: ["knowledge base", "kb", "knowledge-base", "reference", "resources"], filePatterns: [], tags: [] },
   { id: "vault", label: "Vault Structure", color: "#34d399", dark: "#059669", folderPatterns: [], filePatterns: ["*MOC*", "*TODO*", "*Inbox*", "*Cortex*"], tags: [] },
   { id: "content", label: "Content", color: "#f59e0b", dark: "#d97706", folderPatterns: ["articles", "content", "drafts", "posts"], filePatterns: [], tags: [] },
   { id: "concept", label: "Concepts", color: "#2dd4bf", dark: "#0d9488", folderPatterns: ["concepts"], filePatterns: [], tags: ["#concept"] },

@@ -90,10 +90,10 @@ function getVaultRoot(app: App): string {
 /**
  * Extract vault file path references from text content.
  * Matches patterns like:
- *   /home/arago/vault/Claude Knowledge Base/Session Log.md
- *   `Projects TO DO.md`
- *   `Claude Knowledge Base/Setup Guide - New Machine.md`
- *   `_Cortex.md`
+ *   /path/to/vault/Knowledge Base/Session Log.md
+ *   `Projects TODO.md`
+ *   `Knowledge Base/Setup Guide.md`
+ *   `Daily Notes.md`
  *   `Vault MOC.md`
  */
 export function extractPathReferences(
@@ -134,10 +134,10 @@ export function extractPathReferences(
   }
 
   // Pattern 3: Bare well-known filenames mentioned in text
+  // Common vault hub/index filenames — users can extend via settings
   const knownFiles = [
-    "Vault MOC", "Content MOC", "Session Log", "Project Status",
-    "Projects TO DO", "Personal TO DO", "_Cortex", "Worldview",
-    "CLAUDE.md", "MEMORY.md",
+    "Vault MOC", "Content MOC", "Home", "Index", "Dashboard",
+    "TODO", "Inbox", "Daily Notes", "Weekly Review",
   ];
   for (const name of knownFiles) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
