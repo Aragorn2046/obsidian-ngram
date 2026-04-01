@@ -80,6 +80,11 @@ export interface BlueprintRendererOptions {
   onAddCategory?: (label: string, color: string) => void;
   onRemoveLink?: (fromId: string, toId: string) => void;
   onFontChange?: (font: string, style: FontStyle) => void;
+  onProfileSave?: (name: string) => void;
+  onProfileLoad?: (profile: import('../types').ViewProfile) => void;
+  onProfileDelete?: (name: string) => void;
+  profiles?: import('../types').ViewProfile[];
+  importanceMetric?: import('./graph-analysis').ImportanceMetric | null;
   nodeFont?: string;
   nodeFontStyle?: FontStyle;
 }
@@ -274,11 +279,17 @@ export class BlueprintRenderer {
         onForceChange: (forces) => this.handleForceChange(forces),
         onAnimate: () => this.handleAnimate(),
         onFontChange: (family, style) => this.setFont(family, style),
+        onProfileSave: (name) => options.onProfileSave?.(name),
+        onProfileLoad: (profile) => options.onProfileLoad?.(profile),
+        onProfileDelete: (name) => options.onProfileDelete?.(name),
       },
       this.organicForces,
       this.theme,
       this.nodeFont,
       this.nodeFontStyle,
+      options.profiles ?? [],
+      this.viewMode,
+      this.organicSizing,
     );
     // Controls panel starts hidden — user opens via "Controls" toolbar button
     // (Previously auto-showed in organic mode, causing a confusing empty overlay)
@@ -366,7 +377,12 @@ export class BlueprintRenderer {
       },
     );
 
-    // 7. Set up ResizeObserver
+    // 7. Restore importance metric if persisted
+    if (options.importanceMetric) {
+      this.setImportanceMetric(options.importanceMetric);
+    }
+
+    // 8. Set up ResizeObserver
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this.container);
   }
@@ -984,6 +1000,11 @@ export class BlueprintRenderer {
       const r = (minR + score * (maxR - minR)) * sizeScale;
       this.organicRadii.set(n.id, Math.max(minR, r));
     }
+
+    // Push importance radii into the simulation for collision detection
+    if (this.simulation) {
+      this.simulation.setRadiiOverride(this.organicRadii);
+    }
   }
 
   // ─── Tier 3: PNG Export ───────────────────────────
@@ -1252,6 +1273,11 @@ export class BlueprintRenderer {
       this.organicControls.toggle();
       this.syncPanelOffsets();
     }
+  }
+
+  /** Update the profiles list shown in the controls panel */
+  updateProfiles(profiles: import('../types').ViewProfile[]): void {
+    this.organicControls?.setProfiles(profiles);
   }
 
   /** Adjust right-positioned panels when controls sidebar is open */

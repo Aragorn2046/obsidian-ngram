@@ -130,6 +130,15 @@ export class ForceSimulation {
     return this.radii;
   }
 
+  /** Override radii from external source (e.g. importance sizing) */
+  setRadiiOverride(radii: Map<string, number>): void {
+    for (const [id, r] of radii) {
+      this.radii.set(id, r);
+    }
+    // Wake up simulation so it re-resolves collisions with new sizes
+    this.alpha = Math.max(this.alpha, 0.3);
+  }
+
   /** Update force parameters from sliders */
   setForces(forces: OrganicForceSettings): void {
     this.forces = { ...forces };

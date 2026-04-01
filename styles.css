@@ -306,6 +306,43 @@
   opacity: 0.85;
 }
 
+/* ─── Profile Controls ──────────────────────────────── */
+
+.blueprint-profile-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.blueprint-profile-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.blueprint-profile-input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 12px;
+}
+
+.blueprint-profile-btn {
+  width: auto;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.blueprint-profile-btn-danger {
+  background: var(--text-error);
+  padding: 4px 8px;
+}
+
 /* ─── Preview Tooltip ────────────────────────────────── */
 
 .blueprint-preview-tooltip {

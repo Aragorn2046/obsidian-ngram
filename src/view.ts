@@ -1,6 +1,6 @@
 import { ItemView, Notice, TFile, WorkspaceLeaf, type SplitDirection } from "obsidian";
 import { VIEW_TYPE_BLUEPRINT } from "./types";
-import type { BlueprintData, OrganicForceSettings } from "./types";
+import type { BlueprintData, OrganicForceSettings, ViewProfile } from "./types";
 import type NgramPlugin from "./main";
 import { BlueprintRenderer } from "./renderer/index";
 import { VaultScanner } from "./scanner/index";
@@ -116,6 +116,11 @@ export class BlueprintView extends ItemView {
         onAddCategory: (label, color) => this.handleAddCategory(label, color),
         onRemoveLink: (fromId, toId) => this.handleRemoveLink(fromId, toId),
         onFontChange: (font, style) => this.handleFontChange(font, style),
+        onProfileSave: (name) => this.handleProfileSave(name),
+        onProfileLoad: (profile) => this.handleProfileLoad(profile),
+        onProfileDelete: (name) => this.handleProfileDelete(name),
+        profiles: this.plugin.settings.profiles ?? [],
+        importanceMetric: (this.plugin.settings.importanceMetric as any) ?? null,
         nodeFont: this.plugin.settings.nodeFont ?? 'system-ui',
         nodeFontStyle: this.plugin.settings.nodeFontStyle ?? 'bold',
       });
@@ -294,6 +299,64 @@ export class BlueprintView extends ItemView {
     this.fontSaveTimer = setTimeout(async () => {
       await this.plugin.saveSettings();
     }, 300);
+  }
+
+  // ─── Profile Persistence ────────────────────────────────────
+
+  private async handleProfileSave(name: string): Promise<void> {
+    if (!this.plugin.settings.profiles) {
+      this.plugin.settings.profiles = [];
+    }
+    const profile: ViewProfile = {
+      name,
+      viewMode: this.plugin.settings.viewMode,
+      organicSizing: this.plugin.settings.organicSizing,
+      organicForces: { ...this.plugin.settings.organicForces },
+      nodeFont: this.plugin.settings.nodeFont ?? 'system-ui',
+      nodeFontStyle: this.plugin.settings.nodeFontStyle ?? 'bold',
+    };
+    // Replace existing profile with same name, or append
+    const idx = this.plugin.settings.profiles.findIndex(p => p.name === name);
+    if (idx >= 0) {
+      this.plugin.settings.profiles[idx] = profile;
+    } else {
+      this.plugin.settings.profiles.push(profile);
+    }
+    await this.plugin.saveSettings();
+    this.renderer?.updateProfiles(this.plugin.settings.profiles);
+    new Notice(`Profile "${name}" saved`);
+  }
+
+  private async handleProfileLoad(profile: ViewProfile): Promise<void> {
+    this.plugin.settings.viewMode = profile.viewMode;
+    this.plugin.settings.organicSizing = profile.organicSizing;
+    this.plugin.settings.organicForces = { ...profile.organicForces };
+    this.plugin.settings.nodeFont = profile.nodeFont;
+    this.plugin.settings.nodeFontStyle = profile.nodeFontStyle;
+    await this.plugin.saveSettings();
+
+    // Apply to renderer
+    if (this.renderer) {
+      this.renderer.setViewMode(
+        profile.viewMode,
+        profile.organicSizing,
+        profile.organicForces,
+      );
+    }
+
+    // Rebuild toolbar for mode changes
+    if (this.currentData && this.toolbarEl) {
+      this.buildToolbar(this.currentData);
+    }
+    new Notice(`Profile "${profile.name}" loaded`);
+  }
+
+  private async handleProfileDelete(name: string): Promise<void> {
+    if (!this.plugin.settings.profiles) return;
+    this.plugin.settings.profiles = this.plugin.settings.profiles.filter(p => p.name !== name);
+    await this.plugin.saveSettings();
+    this.renderer?.updateProfiles(this.plugin.settings.profiles);
+    new Notice(`Profile "${name}" deleted`);
   }
 
   // ─── Color Persistence ─────────────────────────────────────
@@ -869,6 +932,8 @@ export class BlueprintView extends ItemView {
         const idx = metrics.indexOf(current);
         const next = metrics[(idx + 1) % metrics.length];
         this.renderer?.setImportanceMetric(next);
+        this.plugin.settings.importanceMetric = next;
+        this.plugin.saveSettings();
         if (next) new Notice(`Node sizing: ${next}`);
         else new Notice('Node sizing: default');
         if (this.currentData && this.toolbarEl) this.buildToolbar(this.currentData);

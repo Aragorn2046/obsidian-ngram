@@ -2,13 +2,16 @@
 // DOM-based overlay panel matching Obsidian's Graph View style.
 // Zero Obsidian dependencies.
 
-import type { OrganicForceSettings, FontStyle } from '../types';
+import type { OrganicForceSettings, FontStyle, ViewProfile, ViewMode } from '../types';
 import type { ThemeColors } from './theme';
 
 export interface OrganicControlsCallbacks {
   onForceChange: (forces: OrganicForceSettings) => void;
   onAnimate: () => void;
   onFontChange?: (family: string, style: FontStyle) => void;
+  onProfileSave?: (name: string) => void;
+  onProfileLoad?: (profile: ViewProfile) => void;
+  onProfileDelete?: (name: string) => void;
 }
 
 export class OrganicControlsPanel {
@@ -19,6 +22,9 @@ export class OrganicControlsPanel {
   private visible = false;
   private fontFamily: string;
   private fontStyle: FontStyle;
+  private profiles: ViewProfile[] = [];
+  private viewMode: ViewMode = 'organic';
+  private organicSizing = true;
 
   constructor(
     container: HTMLDivElement,
@@ -27,12 +33,18 @@ export class OrganicControlsPanel {
     theme: ThemeColors,
     fontFamily = 'system-ui',
     fontStyle: FontStyle = 'bold',
+    profiles: ViewProfile[] = [],
+    viewMode: ViewMode = 'organic',
+    organicSizing = true,
   ) {
     this.container = container;
     this.callbacks = callbacks;
     this.forces = { ...forces };
     this.fontFamily = fontFamily;
     this.fontStyle = fontStyle;
+    this.profiles = profiles;
+    this.viewMode = viewMode;
+    this.organicSizing = organicSizing;
 
     this.el = document.createElement('div');
     this.el.className = 'blueprint-organic-controls';
@@ -64,6 +76,16 @@ export class OrganicControlsPanel {
   setForces(forces: OrganicForceSettings): void {
     this.forces = { ...forces };
     this.render();
+  }
+
+  setProfiles(profiles: ViewProfile[]): void {
+    this.profiles = [...profiles];
+    this.render();
+  }
+
+  setViewState(viewMode: ViewMode, organicSizing: boolean): void {
+    this.viewMode = viewMode;
+    this.organicSizing = organicSizing;
   }
 
   setTheme(_theme: ThemeColors): void {
@@ -134,6 +156,10 @@ export class OrganicControlsPanel {
       this.fontStyle = val as FontStyle;
       this.callbacks.onFontChange?.(this.fontFamily, this.fontStyle);
     });
+
+    // ─── Profiles section ─────────────────────────────
+    this.addSectionHeader('Profiles');
+    this.renderProfileControls();
 
     // Redistribute button
     const animBtn = document.createElement('button');
@@ -264,6 +290,67 @@ export class OrganicControlsPanel {
     row.appendChild(select);
 
     this.el.appendChild(row);
+  }
+
+  private renderProfileControls(): void {
+    // Profile selector + load
+    if (this.profiles.length > 0) {
+      const loadRow = document.createElement('div');
+      loadRow.className = 'blueprint-organic-row blueprint-profile-row';
+
+      const select = document.createElement('select');
+      select.className = 'blueprint-organic-dropdown blueprint-profile-select';
+      for (const p of this.profiles) {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.textContent = p.name;
+        select.appendChild(opt);
+      }
+      loadRow.appendChild(select);
+
+      const loadBtn = document.createElement('button');
+      loadBtn.className = 'blueprint-organic-animate-btn blueprint-profile-btn';
+      loadBtn.textContent = 'Load';
+      loadBtn.title = 'Apply this profile';
+      loadBtn.addEventListener('click', () => {
+        const profile = this.profiles.find(p => p.name === select.value);
+        if (profile) this.callbacks.onProfileLoad?.(profile);
+      });
+      loadRow.appendChild(loadBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'blueprint-organic-animate-btn blueprint-profile-btn blueprint-profile-btn-danger';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete this profile';
+      delBtn.addEventListener('click', () => {
+        this.callbacks.onProfileDelete?.(select.value);
+      });
+      loadRow.appendChild(delBtn);
+
+      this.el.appendChild(loadRow);
+    }
+
+    // Save current as new profile
+    const saveRow = document.createElement('div');
+    saveRow.className = 'blueprint-organic-row blueprint-profile-row';
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'blueprint-organic-dropdown blueprint-profile-input';
+    nameInput.placeholder = 'Profile name...';
+    saveRow.appendChild(nameInput);
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'blueprint-organic-animate-btn blueprint-profile-btn';
+    saveBtn.textContent = 'Save';
+    saveBtn.title = 'Save current settings as a profile';
+    saveBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (name) this.callbacks.onProfileSave?.(name);
+    });
+    saveRow.appendChild(saveBtn);
+
+    this.el.appendChild(saveRow);
   }
 
   private emit(): void {

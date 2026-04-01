@@ -39,6 +39,15 @@ export interface CustomCategory {
 
 export type FontStyle = 'normal' | 'bold' | 'italic';
 
+export interface ViewProfile {
+  name: string;
+  viewMode: ViewMode;
+  organicSizing: boolean;
+  organicForces: OrganicForceSettings;
+  nodeFont: string;
+  nodeFontStyle: FontStyle;
+}
+
 export interface NgramSettings {
   excludePaths: string[];
   minBacklinks: number;
@@ -51,6 +60,8 @@ export interface NgramSettings {
   organicForces: OrganicForceSettings;
   nodeFont: string;       // font family for node text
   nodeFontStyle: FontStyle; // normal, bold, or italic
+  importanceMetric: string | null; // 'connections' | 'betweenness' | 'pagerank' | null
+  profiles: ViewProfile[];
 }
 
 export const DEFAULT_SETTINGS: NgramSettings = {
@@ -65,6 +76,8 @@ export const DEFAULT_SETTINGS: NgramSettings = {
   organicForces: { ...DEFAULT_ORGANIC_FORCES },
   nodeFont: 'system-ui',
   nodeFontStyle: 'bold',
+  importanceMetric: null,
+  profiles: [],
 };
 
 // ─── Blueprint Data Model ────────────────────────────────────
