@@ -1,30 +1,79 @@
 // ─── Tag Wire Scanner ───────────────────────────────────────
 // Creates wires between nodes that share tags.
-// Only creates wires when nodes share 2+ tags to avoid noise.
+// Only meaningful shared tags are counted — broad taxonomy tags
+// (lang/*, status/*, type/*, and other structural metadata tags)
+// are excluded from co-occurrence to reduce graph noise.
 
 import type { WireDef, NodeDef } from "../types";
 import type { FileInfo } from "./types";
 
 /**
- * Build tag-based wires: nodes sharing 2+ tags get a connection.
- * Uses the tags extracted during file collection.
+ * Tags that exist purely for structural/metadata classification.
+ * Sharing these doesn't indicate a meaningful intellectual relationship
+ * between notes — e.g. two notes both tagged #reference or #workflow
+ * don't necessarily belong together in the graph.
+ *
+ * Prefixed entries use startsWith matching (e.g. "lang/" catches lang/en, lang/nl).
+ * Exact entries use full tag equality.
+ */
+const STRUCTURAL_TAG_PREFIXES = [
+  "lang/",
+  "status/",
+  "type/",
+  "format/",
+  "source/",
+];
+
+const STRUCTURAL_TAGS_EXACT = new Set([
+  "#reference",
+  "#workflow",
+  "#config",
+  "#note",
+  "#index",
+  "#moc",
+  "#template",
+  "#archive",
+  "#inbox",
+  "#todo",
+  "#daily",
+  "#weekly",
+]);
+
+function isMeaningfulTag(tag: string): boolean {
+  const t = tag.toLowerCase();
+  // Exclude exact structural tags
+  if (STRUCTURAL_TAGS_EXACT.has(t)) return false;
+  // Exclude tags matching structural prefixes
+  for (const prefix of STRUCTURAL_TAG_PREFIXES) {
+    if (t.startsWith(prefix) || t.startsWith("#" + prefix)) return false;
+  }
+  return true;
+}
+
+/**
+ * Build tag-based wires: nodes sharing enough meaningful tags get a connection.
+ * Structural/taxonomy tags are excluded from co-occurrence counting to reduce noise.
+ * Default minSharedTags raised to 3 (from 2) to surface only strong co-occurrence.
  */
 export function buildTagWires(
   nodes: NodeDef[],
   files: FileInfo[],
   nodeIdMap: Map<string, string>,
   existingWireKeys: Set<string>,
-  minSharedTags: number = 2,
+  minSharedTags: number = 3,
 ): WireDef[] {
   const wires: WireDef[] = [];
 
-  // Build nodeId → tags lookup
+  // Build nodeId → meaningful tags lookup
   const fileTagMap = new Map<string, Set<string>>();
   for (const file of files) {
     const nodeId = nodeIdMap.get(file.path);
     if (!nodeId) continue;
-    if (file.tags.length > 0) {
-      fileTagMap.set(nodeId, new Set(file.tags.map(t => t.toLowerCase())));
+    const meaningfulTags = file.tags
+      .map(t => t.toLowerCase())
+      .filter(isMeaningfulTag);
+    if (meaningfulTags.length > 0) {
+      fileTagMap.set(nodeId, new Set(meaningfulTags));
     }
   }
 
@@ -38,7 +87,7 @@ export function buildTagWires(
       const bId = nodeIds[j];
       const bTags = fileTagMap.get(bId)!;
 
-      // Count shared tags
+      // Count shared meaningful tags
       let shared = 0;
       for (const tag of aTags) {
         if (bTags.has(tag)) shared++;

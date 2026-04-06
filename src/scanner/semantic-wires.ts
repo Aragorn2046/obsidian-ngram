@@ -95,6 +95,7 @@ function getVaultRoot(app: App): string {
  *   `Knowledge Base/Setup Guide.md`
  *   `Daily Notes.md`
  *   `Vault MOC.md`
+ *   /write, /futurist, /prime (slash command references → skill files)
  */
 export function extractPathReferences(
   content: string,
@@ -125,8 +126,8 @@ export function extractPathReferences(
   let m2;
   while ((m2 = backtickRegex.exec(content)) !== null) {
     const ref = m2[1].trim();
-    // Skip if it looks like code
-    if (/[=(){};<>|&]/.test(ref)) continue;
+    // Skip if it looks like code (& intentionally excluded: valid in vault filenames)
+    if (/[=(){};<>|]/.test(ref)) continue;
     if (!seen.has(ref.toLowerCase())) {
       seen.add(ref.toLowerCase());
       refs.push(ref);
@@ -147,6 +148,29 @@ export function extractPathReferences(
       if (!seen.has(key) && !seen.has(key + ".md")) {
         seen.add(key);
         refs.push(name);
+      }
+    }
+  }
+
+  // Pattern 4: Slash command references → resolve to skill files.
+  // Matches /write, /futurist, /prime, /cortex etc. in prose text.
+  // Resolves to Config/skills/<name>/SKILL.md (skills format post-Claude Code 2.1.88).
+  // Negative lookbehind prevents matching URL paths (https://, /mnt/) and
+  // backtick-wrapped code — those are handled by Pattern 1/2 already.
+  const slashCmdRegex = /(?<![`:\w/])\/([a-z][a-z0-9-]*)(?=[^/\w]|$)/gm;
+  let m4: RegExpExecArray | null;
+  while ((m4 = slashCmdRegex.exec(content)) !== null) {
+    const cmdName = m4[1];
+    // Candidate resolution order: skills dir first, then legacy commands dir
+    const candidates = [
+      `Config/skills/${cmdName}/SKILL.md`,
+      `Config/commands/${cmdName}.md`,
+    ];
+    for (const candidate of candidates) {
+      const key = candidate.toLowerCase();
+      if (!seen.has(key)) {
+        seen.add(key);
+        refs.push(candidate);
       }
     }
   }

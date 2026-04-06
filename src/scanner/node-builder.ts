@@ -109,10 +109,13 @@ function getInclusionReason(
   // 6. TODO/Inbox/Cortex files
   if (/todo|inbox|cortex/i.test(file.name)) return "todo-inbox";
 
-  // 7. Well-connected notes
+  // 7. Voice profile files (Knowledge Base/Voice Profiles/ — referenced heavily but few wikilink backlinks)
+  if (pathLower.includes("knowledge base/voice profiles/")) return "config";
+
+  // 8. Well-connected notes
   if (file.incomingLinkCount >= minBacklinks) return "well-connected";
 
-  // 8. Hub notes: 5+ outgoing AND 3+ incoming
+  // 9. Hub notes: 5+ outgoing AND 3+ incoming
   if (file.outgoingLinks.length >= 5 && file.incomingLinkCount >= 3) return "hub";
 
   return null;
