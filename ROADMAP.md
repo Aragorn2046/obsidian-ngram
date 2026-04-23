@@ -1,6 +1,79 @@
 # Ngram Roadmap — Future Features
 
-## v0.2.0 — Accept All Gaps
+## v0.2.0 — UX Polish & Filter Refinement
+
+**Goal:** Make the graph more navigable and reduce visual noise for large vaults.
+
+**Design:**
+- Node search bar with live highlight (keyboard shortcut, e.g. Cmd+K)
+- Filter panel: by tag, folder, link depth (1st/2nd/3rd degree from selected node), creation date range
+- Saved filter presets — name and store filter combinations in plugin data.json
+- Mini-map overlay in corner for large graphs (show full graph, highlight visible viewport)
+- Edge weight slider — hide weak co-citation edges below threshold to reduce clutter
+- Node detail panel: click a node → side panel shows note title, tags, linked notes count, excerpt
+
+**Implementation notes:**
+- Filter state managed in `SettingsManager` or ephemeral session state
+- Leverage existing `graph-analysis.ts` edge weights for filter thresholds
+- Node detail panel: read note content via Obsidian `vault.read()` API
+
+---
+
+## v0.3.0 — Shelby Infrastructure Visualization
+
+**Goal:** Add a second visualization domain alongside vault-concepts: Shelby's live infrastructure (machines, MCP servers, services, data flows).
+
+**Design:**
+- Toggle in toolbar: "Vault" | "Shelby Infra" — switches data source and layout
+- Infra node types: Machine (Dawn/Dusk/Day), MCPServer, Service, DataFlow, SkillFile
+- Edge types: `runs-on`, `connects-to`, `reads-from`, `writes-to`, `triggers`
+- Node coloring by type (distinct palette, legend in sidebar)
+- Data sources:
+  - `~/.claude.json` → MCP servers per machine
+  - `MEMORY.md` + `vault/Config/` → services and their relationships
+  - `ai-wiki/` articles → higher-level infrastructure descriptions
+  - Port Registry → active ports per service
+- Infra graph is read-only (no wire-drag, no gap analysis)
+- Refresh button + last-updated timestamp (data can go stale)
+
+**Implementation notes:**
+- New data loader: `src/data/infra-loader.ts` — reads config files, parses JSON/YAML/Markdown, builds graph
+- New node/edge type definitions in `src/types.ts` alongside existing vault types
+- Toggle in `src/view.ts` — swap data loader + disable gap panel for infra mode
+- Graph coloring: extend existing color system with new type map
+- Ship as opt-in (settings toggle) since it requires macOS/Day to be useful
+
+---
+
+## v0.4.0 — Mobile Touch & Deep Vault Linking
+
+**Goal:** Make Ngram usable on Obsidian mobile (iOS/Android) and deepen integration with vault content.
+
+**Design — Mobile touch:**
+- Replace hover-dependent interactions with tap-to-focus (single tap selects node, opens detail panel)
+- Two-finger pinch-to-zoom, one-finger pan (replace scroll-wheel equivalents)
+- Tap on wire → show edge detail (shared tags / co-citations)
+- Long-press on node → context menu (Open Note, Focus Graph, Copy Title)
+- Detect mobile viewport and switch to touch mode automatically (`PointerEvent` API)
+
+**Design — Deep vault linking:**
+- Node double-tap / double-click → opens the note in the editor (existing Obsidian `workspace.openLinkText()`)
+- "Linked to" panel: selecting a node shows its direct connections as clickable list
+- Backlink integration: show backlink count as node badge
+- Graph-to-note navigation: pressing a note's heading in the detail panel jumps to that section
+
+**Implementation notes:**
+- Touch event handling in `src/renderer/interaction.ts` — add `pointerdown/pointermove/pointerup` handlers (replaces separate mouse + touch)
+- `PointerEvent.pointerType === 'touch'` to distinguish touch from mouse
+- Force-graph lib (d3-force or custom): verify pan/zoom works via `transform` on touch; may need custom gesture layer
+- Mobile testing: use Obsidian mobile beta + BrowserStack for iOS Safari / Android Chrome device coverage
+- Feature-flag: `enableMobileTouch` setting (default: auto-detect) for rollback if issues
+
+---
+
+## Prior Milestone Proposals (Deferred)
+
+The following milestones were proposed in an earlier planning cycle. They remain valid but are deprioritized behind the v0.2–v0.4 cycle above.
 
 **Problem:** Gap panel shows suggestions one at a time. Users with many gaps want batch operations.
 
@@ -18,7 +91,7 @@
 
 ---
 
-## v0.3.0 — Semantic Embeddings
+### Semantic Embeddings (was v0.3)
 
 **Problem:** Current gap analysis uses co-citation and title similarity. Semantic embeddings would find deeper topical relationships.
 
@@ -42,7 +115,7 @@
 
 ---
 
-## v0.4.0 — 3D Graph View
+### 3D Graph View (was v0.4)
 
 **Problem:** Large vaults (1000+ notes) make 2D graphs cluttered. A 3D view with depth adds another dimension for separation.
 

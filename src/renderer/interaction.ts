@@ -119,9 +119,153 @@ export class InteractionManager {
     this.addListener(this.canvas, 'wheel', this.onWheel, { passive: false });
     this.addListener(this.canvas, 'contextmenu', this.onContextMenu);
 
+    // Touch events on canvas (mobile support)
+    this.addListener(this.canvas, 'touchstart', this.onTouchStart, { passive: false });
+    this.addListener(this.canvas, 'touchmove', this.onTouchMove, { passive: false });
+    this.addListener(this.canvas, 'touchend', this.onTouchEnd, { passive: false });
+
     // Keyboard events on container
     this.addListener(this.container, 'keydown', this.onKeyDown);
   }
+
+  // ─── Touch State ────────────────────────────────────────
+
+  private touchStartDist = 0;       // distance between two fingers at pinch start
+  private touchStartZoom = 1;       // zoom at pinch start
+  private touchStartPanX = 0;       // panX at pinch start
+  private touchStartPanY = 0;       // panY at pinch start
+  private touchStartMidX = 0;       // midpoint X at pinch start
+  private touchStartMidY = 0;       // midpoint Y at pinch start
+  private lastTapTime = 0;          // timestamp of last tap (for double-tap detection)
+  private lastTapNodeId: string | null = null;
+
+  private getTouchPos(touch: Touch): { mx: number; my: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return { mx: touch.clientX - rect.left, my: touch.clientY - rect.top };
+  }
+
+  private onTouchStart = (e: Event): void => {
+    const te = e as TouchEvent;
+    te.preventDefault();
+
+    if (te.touches.length === 1) {
+      // Single finger — treat like mousedown
+      const { mx, my } = this.getTouchPos(te.touches[0]);
+      this.mouseX = mx;
+      this.mouseY = my;
+
+      const n = this.getNodeAt(mx, my);
+      if (n) {
+        const vt = this.data.getViewTransform();
+        this.dragging = n;
+        this.dragOff.x = (mx - vt.panX) / vt.zoom - n.x;
+        this.dragOff.y = (my - vt.panY) / vt.zoom - n.y;
+        this.callbacks.onNodeDragStart(n.id);
+      } else {
+        const vt = this.data.getViewTransform();
+        this.isPanning = true;
+        this.panStart.x = mx - vt.panX;
+        this.panStart.y = my - vt.panY;
+      }
+      this.didDrag = false;
+
+    } else if (te.touches.length === 2) {
+      // Two fingers — pinch-to-zoom
+      this.dragging = null;
+      this.isPanning = false;
+      const t0 = this.getTouchPos(te.touches[0]);
+      const t1 = this.getTouchPos(te.touches[1]);
+      this.touchStartDist = Math.hypot(t1.mx - t0.mx, t1.my - t0.my);
+      const vt = this.data.getViewTransform();
+      this.touchStartZoom = vt.zoom;
+      this.touchStartPanX = vt.panX;
+      this.touchStartPanY = vt.panY;
+      this.touchStartMidX = (t0.mx + t1.mx) / 2;
+      this.touchStartMidY = (t0.my + t1.my) / 2;
+    }
+  };
+
+  private onTouchMove = (e: Event): void => {
+    const te = e as TouchEvent;
+    te.preventDefault();
+
+    if (te.touches.length === 1) {
+      const { mx, my } = this.getTouchPos(te.touches[0]);
+      this.mouseX = mx;
+      this.mouseY = my;
+      this.didDrag = true;
+
+      if (this.dragging) {
+        const vt = this.data.getViewTransform();
+        this.dragging.x = (mx - vt.panX) / vt.zoom - this.dragOff.x;
+        this.dragging.y = (my - vt.panY) / vt.zoom - this.dragOff.y;
+        this.callbacks.requestRedraw();
+      } else if (this.isPanning) {
+        const vt = this.data.getViewTransform();
+        const newPanX = mx - this.panStart.x;
+        const newPanY = my - this.panStart.y;
+        this.data.setViewTransform({ panX: newPanX, panY: newPanY, zoom: vt.zoom });
+        this.callbacks.onPanZoomChange(newPanX, newPanY, vt.zoom);
+        this.callbacks.requestRedraw();
+      }
+
+    } else if (te.touches.length === 2 && this.touchStartDist > 0) {
+      // Pinch-to-zoom
+      const t0 = this.getTouchPos(te.touches[0]);
+      const t1 = this.getTouchPos(te.touches[1]);
+      const dist = Math.hypot(t1.mx - t0.mx, t1.my - t0.my);
+      const scale = dist / this.touchStartDist;
+      let newZoom = Math.max(0.15, Math.min(2.5, this.touchStartZoom * scale));
+
+      // Zoom anchored to pinch midpoint
+      const midX = (t0.mx + t1.mx) / 2;
+      const midY = (t0.my + t1.my) / 2;
+      const wx = (this.touchStartMidX - this.touchStartPanX) / this.touchStartZoom;
+      const wy = (this.touchStartMidY - this.touchStartPanY) / this.touchStartZoom;
+      const newPanX = midX - wx * newZoom;
+      const newPanY = midY - wy * newZoom;
+
+      this.data.setViewTransform({ panX: newPanX, panY: newPanY, zoom: newZoom });
+      this.callbacks.onPanZoomChange(newPanX, newPanY, newZoom);
+      this.callbacks.requestRedraw();
+    }
+  };
+
+  private onTouchEnd = (e: Event): void => {
+    const te = e as TouchEvent;
+    te.preventDefault();
+
+    if (te.changedTouches.length >= 1 && !this.didDrag) {
+      const { mx, my } = this.getTouchPos(te.changedTouches[0]);
+      const n = this.getNodeAt(mx, my);
+      if (n) {
+        // Double-tap detection (within 300ms on same node = focus)
+        const now = Date.now();
+        if (now - this.lastTapTime < 300 && this.lastTapNodeId === n.id) {
+          // Double-tap: open the note
+          this.callbacks.onNodeClick(n.id, false, true);
+          this.lastTapTime = 0;
+          this.lastTapNodeId = null;
+        } else {
+          // Single tap: select node
+          this.callbacks.onNodeClick(n.id, false, false);
+          this.lastTapTime = now;
+          this.lastTapNodeId = n.id;
+        }
+      } else if (!this.dragging) {
+        this.callbacks.onBackgroundClick();
+      }
+    }
+
+    if (this.dragging) {
+      this.callbacks.onNodeDragEnd(this.dragging.id, this.dragging.x, this.dragging.y);
+    }
+
+    this.dragging = null;
+    this.isPanning = false;
+    this.didDrag = false;
+    this.touchStartDist = 0;
+  };
 
   // ─── Hit Testing ────────────────────────────────────────
 
