@@ -1,7 +1,7 @@
 {
   "id": "ngram",
   "name": "Ngram",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.0.0",
   "description": "Advanced vault graph visualization — clusters, gap analysis, importance sizing, lasso selection, PNG export, and more. A supercharged replacement for Obsidian's built-in Graph View.",
   "author": "Aragorn Meulendijks",
